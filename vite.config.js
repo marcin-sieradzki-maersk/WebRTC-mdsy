@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import copy from 'rollup-plugin-copy';
 
 export default defineConfig({
   root: '.',
@@ -23,4 +24,17 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
     },
   },
+  plugins: [
+    copy({
+      targets: [
+        {
+          src: 'node_modules/@maersk-global/icons/js/**/*',
+          dest: 'dist/assets/node_modules',
+        },
+      ],
+      flatten: false,
+      hook: 'writeBundle',
+      copySync: true,
+    }),
+  ],
 }); 

@@ -1,10 +1,11 @@
-// Main entry point for the application
-// This script will automatically redirect to the main application page
+import '@maersk-global/fonts/maeu/fonts.css';
+import '@maersk-global/mds-foundations/css/foundations.css';
+import '@maersk-global/mds-design-tokens/maersk/light/css/design-tokens-px.css';
+import '@maersk-global/mds-components-core';
 
-// If we're on the root page, redirect to the main app
-if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
-  window.location.href = '/html/index.html';
-}
+import { MdsConfig } from '@maersk-global/mds-config';
+MdsConfig.iconsDynamicImportPath = import.meta.env.MODE === 'development' ? '/node_modules/' : '/assets/node_modules/';
+
 
 // Export for Vite to bundle properly
 export default {}; 

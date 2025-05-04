@@ -32,8 +32,9 @@
 
     /* Widget. Contains call buttons */
     #c2c_widget_div {
-        padding: 10px;
-        width: 400px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     /* Phone status line.
@@ -45,9 +46,7 @@
 
     /* Select devices button. Optional. Can be hidden */
     #c2c_select_devices_btn {
-        font-size: 18px;
-        padding-top: 2px;
-        margin-right: 8px;
+
         display: none; /* hide select devices */
     }
 
@@ -84,10 +83,7 @@
 
     /* Main call button and SVG icon */
     #c2c_call_btn {
-        font-size: 18px;
-        padding-top: 2px;
-        padding-left: 10px;
-        padding-right: 30px;
+
         display: none;
     }
     
