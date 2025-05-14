@@ -1,20 +1,66 @@
 <!DOCTYPE html>
-<!--
-    Click to call widget usage example
--->
-<html>
-
+<html lang="en">
 <head>
-    <title>click-to-call example</title>
+    <title>Contact Support - Maersk</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="../css/c2c.css">
+    <link rel="stylesheet" href="../css/maersk-theme.css">
     <link rel="icon" href="favicon.png">
 
-    <!-- 
-        It's optional. Can be used to prevent cross origin vulnerability 
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self';">
-    -->
+    <style>
+        .volume-slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--mds_color_background_primary);
+            outline: none;
+            border-radius: 4px;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--mds_brand_appearance_info_default_background-color);
+            cursor: pointer;
+        }
+        
+        .volume-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--mds_brand_appearance_info_default_background-color);
+            cursor: pointer;
+            border: none;
+        }
+    </style>
+
+    <!-- MDS Styles -->
+    <link rel="stylesheet" href="/node_modules/@maersk-global/fonts/maeu/fonts.css">
+    <link rel="stylesheet" href="/node_modules/@maersk-global/mds-design-tokens/maersk/light/css/design-tokens-px.css">
+    <link rel="stylesheet" href="/node_modules/@maersk-global/mds-foundations/css/foundations.css">
+
+    <!-- MDS Components -->
+    <script type="module">
+        import '@maersk-global/mds-components-core/mc-button';
+        import '@maersk-global/mds-components-core/mc-icon';
+        import '@maersk-global/mds-components-core/mc-checkbox';
+        import '@maersk-global/mds-components-core/mc-card';
+        import '@maersk-global/mds-components-core/mc-top-bar';
+        import '@maersk-global/mds-components-core/mc-select';
+        import '@maersk-global/mds-components-core/mc-option';
+        import '@maersk-global/mds-components-core/mc-tag';
+        import { MdsConfig } from '@maersk-global/mds-config';
+        
+        // Configure the icons path
+        MdsConfig.iconsDynamicImportPath = '/node_modules/';
+    </script>
+    
+    <!-- AudioCodes WebRTC scripts -->
     <script type="module" src="../src/main.js"></script>
     <script defer src="../conf/config.js"></script>
     <script defer src="../js/ac_webrtc.min.js"></script>
@@ -26,149 +72,213 @@
      -->
 </head>
 
-<body>
-    <img src="logo-audio-codes.svg" alt="AudioCodes" width="450" height="70">
-    <div id="main_div">
-        <h2>Click To Call Example</h2>
-        <p>This page shows the AudioCodes click To call.</p>
-        <p>This site is for Demo purpose only.</p>
+<body class="mds">
+    <mc-top-bar product="Maersk Line" productshort="Maersk" href="/"></mc-top-bar>
 
-        <!-- Optional connection speed. Used if defined in HTML and testCallEnabled in config.js -->
-        <div id="c2c_connection_speed_div"></div>
-
-        <!-- Optional test call quality. Used only if testCallEnabled in config.js -->
-        <div id="c2c_test_call_quality_div"></div>
-
-        <!-- 
-		    Example of optional arbitrary form that user can fill before call. 
-            Please define custom function c2c_create_x_header (see c2c.js)
-            The function read the form data and create JSON that will be 
-            attached to outgoing call INVITE as SIP X-Header
-        
-        <form id="user_order"">
-            <label for="customer_name">Customer name:</label><br>
-            <input type="text" id="customer_name" placeholder="first name" value=""><br>
-
-            <label for="mobile">Mobile:</label><br>
-            <input type="text" id="customer_mobile" placeholder="phone number" value=""><br>
-
-            <label for="address">Address:</label><br>
-            <input type="text" id="customer_address" placeholder="address" value=""><br>
-        </form>
-        -->
-
-        <!-- click to call widget (call buttons and audio/video selection) -->
-        <div id="c2c_widget_div">
-            <!-- Optional select devices button  -->
-            <mc-button icon="cog" id="c2c_select_devices_btn" title="Click to select devices (microphone, camera, speaker)">
-            <span>Devices</span>
-            </mc-button>
-			
-            <!-- Optional open/close keypad button. To send DTMF during call -->			
-            <mc-button id="c2c_keypad_btn" title="Click to open/close keypad">
-                <svg id="c2c_keypad_svg" viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M120,100h70v70h-70zm90,0h70v70h-70zm90,0h70v70h-70zM120,190h70v70h-70zm90,0h70v70h-70zm90,0h70v70h-70zM120,280h70v70h-70zm90,0h70v70h-70zm90,0h70v70h-70zM120,370h70v70h-70zm90,0h70v70h-70zm90,0h70v70h-70z" fill="#1D1D1D"/></svg>
-                <span>Keypad</span>
-            </mc-button>
-
-
-            <!-- Test call button (to check Phone-SBC line quality) -->
-            <mc-button id="c2c_test_btn" title="Click to test connection quality">
-                <span>Test line</span>
-            </mc-button>
-
-            &nbsp;
-
-            <!-- Call button -->
-            <mc-button icon="phone" id="c2c_call_btn" title="Click to call us on the phone">
-                <span>Call</span>
-            </mc-button>
-
-            <!-- If configured 'user_control' before call show video checkbox -->
-            <span id="c2c_video_chk_span">
-                <input id="c2c_video_chk" type="checkbox" title="video call">
-                video
-            </span>
-
-            <!-- If configured 'user_control' - during call show camera button  -->
-            <mc-button icon="camera" id="c2c_camera_btn">
-
-            </mc-button>
-
-            <span id="c2c_self_video_chk_span">
-                <input id="c2c_self_video_chk" type="checkbox" title="show local video">
-                self video
-            </span>
-
-            <!-- Optional select devices div  -->
-            <div id="c2c_select_devices_div">
-                <form id="c2c_devices" onsubmit="event.preventDefault()">
-                    <fieldset>
-                        <legend>Select devices</legend>
-                        <dev id="microphone_dev">
-                        Microphone<br>
-                        <select name="microphone">
-                        </select>
-                        <br>
-                        <br>
-                        </dev>
-                        <dev id="speaker_dev">
-                        Speaker<br>
-                        <select name="speaker">
-                        </select>
-                        <br>
-                        <br>
-                        </dev>
-                        <dev id="camera_dev">
-                        Camera<br>
-                        <select name="camera">
-                        </select>
-                        <br>
-                        <br>
-                        </dev>  
-                    </fieldset>
-                    <input id="select_devices_done_btn" type="button" value="Done">
-                </form>
+    <div class="contact-support">
+        <div class="support-card">
+            <div class="support-header">
+                <div class="support-title">
+                        <h2>Maersk Croatia Support</h2>
+                </div>
             </div>
 
-            <!-- phone status line -->
-            <div id="c2c_status_line"></div>
+            <div class="support-content">
+                <div class="service-details">
+                    <h3>Need assistance with shipping in Croatia?</h3>
+                    <p>Our local specialists are ready to help with your logistics needs.</p>
+                </div>
 
-        </div>
-		<!-- end of click to call widget -->
 
-        <!-- Optional keypad div. To send DTMF during call -->
-        <div id="c2c_keypad_div">
-            <table id="c2c_keypad_table" cellpadding="5" cellspacing="3">
-                <tr>
-                    <td>1</td>
-                    <td>2</td>
-                    <td>3</td>
-                </tr>
-                <tr>
-                    <td>4</td>
-                    <td>5</td>
-                    <td>6</td>
-                </tr>
-                <tr>
-                    <td>7</td>
-                    <td>8</td>
-                    <td>9</td>
-                </tr>
-                <tr>
-                    <td>*</td>
-                    <td>0</td>
-                    <td>#</td>
-                </tr>
-            </table>
+                <!-- Call status section (visible during call) -->
+                <div id="call-in-progress" class="call-status" style="display: none;">
+                    <mc-tag appearance="info" id="call-status-tag">Call in progress</mc-tag>
+                    
+                    <div class="call-details">
+                        <div class="avatar-circle"></div>
+                        <div class="phone-number">+1 (800) 123-4567</div>
+                        <div id="call-timer" class="call-timer">00:01</div>
+                        
+                        <div class="call-controls">
+                            <mc-button appearance="neutral" id="mute-btn" icon="microphone">
+                                Mute
+                            </mc-button>
+                            <mc-button appearance="neutral" id="hold-btn" icon="clock">
+                                Hold
+                            </mc-button>
+                            <mc-button appearance="danger" id="c2c_call_btn" icon="phone">
+                                End
+                            </mc-button>
+                        </div>
+                        
+                        <div class="volume-control">
+                            <div class="volume-label">
+                                <span>Volume</span>
+                                <span id="volume-percentage">75%</span>
+                            </div>
+                            <input type="range" id="volume-slider" min="0" max="100" value="75" class="volume-slider">
+                        </div>
+                        
+                        <div class="call-info">
+                            <div>Case #: SR-2023-45678</div>
+                            <div>Department: Technical Support</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pre-call section (visible before call) -->
+                <div id="pre-call-section">
+                    <!-- Device Selection Area -->
+                    <div class="device-selection-area">
+                        <h4 class="device-selection-title">Select your devices</h4>
+                        <div class="device-selection-form">
+                            <div id="microphone_dev" class="device-select-group">
+                                <label>Microphone</label>
+                                <select name="microphone"></select>
+                            </div>
+                            <div id="speaker_dev" class="device-select-group">
+                                <label>Speaker</label>
+                                <select name="speaker"></select>
+                            </div>
+                            <div id="camera_dev" class="device-select-group">
+                                <label>Camera</label>
+                                <select name="camera"></select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- WebRTC widget -->
+                    <div id="c2c_widget_div">
+                        <!-- Optional actions -->
+                        <div style="display: none;">
+                            <mc-button id="c2c_keypad_btn" icon="th" appearance="neutral" variant="outlined" title="Click to open/close keypad">
+                                Keypad
+                            </mc-button>
+                            
+                            <mc-button id="c2c_test_btn" icon="phone" appearance="neutral" variant="outlined" title="Click to test connection quality">
+                                Test line
+                            </mc-button>
+                        </div>
+
+                        <!-- Video controls -->
+                        <div>
+                            <span id="c2c_video_chk_span" style="display: none;">
+                                <mc-checkbox id="c2c_video_chk" label="Enable video call"></mc-checkbox>
+                            </span>
+                            
+                            <span id="c2c_self_video_chk_span" style="display: none;">
+                                <mc-checkbox id="c2c_self_video_chk" label="Show my video"></mc-checkbox>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Hidden call settings and quality div -->
+                    <div style="display: none;">
+                        <!-- Audio Settings button -->
+                        <mc-button class="audio-settings-btn" id="c2c_select_devices_btn" title="Click to select devices" icon="cog" appearance="neutral">
+                            Audio Settings
+                        </mc-button>
+                        
+                        <!-- Hidden test call quality indicators -->
+                        <div id="c2c_test_call_quality_div"></div>
+                    </div>
+
+                    <!-- Optional select devices div (now hidden since we show inputs directly) -->
+                    <div id="c2c_select_devices_div" style="display: none;">
+                        <form id="c2c_devices" onsubmit="event.preventDefault()">
+                            <fieldset>
+                                <legend>Select devices</legend>
+                                <div class="select-device-inputs">
+                                    <div id="microphone_dev_old">
+                                        <label>Microphone</label><br>
+                                        <select name="microphone_old"></select>
+                                    </div>
+                                    <div id="speaker_dev_old">
+                                        <label>Speaker</label><br>
+                                        <select name="speaker_old"></select>
+                                    </div>
+                                    <div id="camera_dev_old">
+                                        <label>Camera</label><br>
+                                        <select name="camera_old"></select>
+                                    </div>
+                                </div>
+                                <mc-button id="select_devices_done_btn" appearance="primary">Done</mc-button>
+                            </fieldset>
+                        </form>
+                    </div>
+
+                    <!-- Optional keypad div -->
+                    <div id="c2c_keypad_div">
+                        <table id="c2c_keypad_table" cellpadding="5" cellspacing="3">
+                            <tr>
+                                <td>1</td>
+                                <td>2</td>
+                                <td>3</td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td>5</td>
+                                <td>6</td>
+                            </tr>
+                            <tr>
+                                <td>7</td>
+                                <td>8</td>
+                                <td>9</td>
+                            </tr>
+                            <tr>
+                                <td>*</td>
+                                <td>0</td>
+                                <td>#</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <!-- Status line -->
+                    <!-- <div id="c2c_status_line"></div> -->
+                    
+                    <!-- Call button -->
+                    <mc-button id="start-call-btn" icon="phone" appearance="primary" variant="filled" width="full-width" title="Click to call us on the phone">
+                        Start Support Call
+                    </mc-button>
+                </div>
+            </div>
+
+            <div class="support-footer">
+                <p>Business hours: Monday-Friday, 8:00-16:00</p>
+            </div>
         </div>
     </div>
 
-    <!-- Video controls for WebRTC. Can be before or after widget buttons. Invisible for audio call -->
+    <!-- Video controls for WebRTC -->
     <div id="c2c_video_div">
         <video id="c2c_local_video" style="display: none;" autoplay playsinline></video>
         <video id="c2c_remote_video" style="display: none;" autoplay playsinline></video>
     </div>
 
-</body>
+    <!-- Include adapter for backwards compatibility with older browsers -->
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
 
+    <script>
+        // Helper to display connection speed
+        document.addEventListener('DOMContentLoaded', function() {
+            // Connection speed is normally retrieved from WebRTC API
+            // For demo purposes we're just displaying a static value
+            const connectionSpeedDiv = document.getElementById('c2c_connection_speed_div');
+            if (connectionSpeedDiv) {
+                connectionSpeedDiv.style.display = 'none'; // Hide the original div
+            }
+            
+            // Setup volume slider
+            const volumeSlider = document.getElementById('volume-slider');
+            const volumePercentage = document.getElementById('volume-percentage');
+            
+            if (volumeSlider && volumePercentage) {
+                volumeSlider.addEventListener('input', function() {
+                    volumePercentage.textContent = this.value + '%';
+                    // Here you would also set the actual call volume if WebRTC API supports it
+                });
+            }
+        });
+    </script>
+</body>
 </html>
