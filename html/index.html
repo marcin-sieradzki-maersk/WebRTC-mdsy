@@ -52,6 +52,7 @@
         import '@maersk-global/mds-components-core/mc-card';
         import '@maersk-global/mds-components-core/mc-top-bar';
         import '@maersk-global/mds-components-core/mc-select';
+        import '@maersk-global/mds-components-core/mc-select-native';
         import '@maersk-global/mds-components-core/mc-option';
         import '@maersk-global/mds-components-core/mc-tag';
         import { MdsConfig } from '@maersk-global/mds-config';
@@ -133,20 +134,24 @@
                         <h4 class="device-selection-title">Select your devices</h4>
                         <div class="device-selection-form">
                             <div id="microphone_dev" class="device-select-group">
-                                <label>Microphone</label>
-                                <select name="microphone"></select>
+                                <mc-select
+                                    value="1"
+                                    label="Microphone"
+                                    placeholder="Select microphone"
+                                    name="microphone">
+                                </mc-select>
                             </div>
                             <div id="speaker_dev" class="device-select-group">
-                                <label>Speaker</label>
-                                <select name="speaker"></select>
-                            </div>
-                            <div id="camera_dev" class="device-select-group">
-                                <label>Camera</label>
-                                <select name="camera"></select>
+                                <mc-select
+                                    value="1"
+                                    label="Speaker"
+                                    placeholder="Select speaker"
+                                    name="speaker">
+                                </mc-select>
                             </div>
                         </div>
                     </div>
-                    
+                    <div id="c2c_status_line" style="display: none;"> </div>
                     <!-- WebRTC widget -->
                     <div id="c2c_widget_div">
                         <!-- Optional actions -->

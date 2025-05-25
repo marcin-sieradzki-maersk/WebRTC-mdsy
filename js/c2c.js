@@ -264,7 +264,7 @@ async function c2c_startPhone() {
             await c2c_devices.enumerate(true);
             c2c_populateDeviceDropdown('microphone');
             c2c_populateDeviceDropdown('speaker');
-            c2c_populateDeviceDropdown('camera');
+            // c2c_populateDeviceDropdown('camera');
         }
     } catch (e) {
         if (c2c_config.allowCallWithoutMicrophone) {
@@ -1451,8 +1451,7 @@ function c2c_gui_phoneCalling() {
         }
 
         // Modify call button look (to hangup)
-        c2c_callButton.appearance = "danger";
-        c2c_callButton.querySelector('span').innerText = "End";
+        c2c_callButton.label = "End";
         c2c_callButton.title = 'End call';
 
         // Set the button handler to hangup.
@@ -1460,13 +1459,11 @@ function c2c_gui_phoneCalling() {
         
         // Set initial states for mute and hold buttons
         if (c2c_muteButton) {
-            c2c_muteButton.appearance = "neutral";
-            c2c_muteButton.querySelector('span').innerText = "Mute";
+            c2c_muteButton.label = "Mute";
         }
         
         if (c2c_holdButton) {
-            c2c_holdButton.appearance = "neutral";
-            c2c_holdButton.querySelector('span').innerText = "Hold";
+            c2c_holdButton.label = "Hold";
         }
 
         // Hide video check box span
@@ -1537,15 +1534,18 @@ function c2c_toggleMute() {
     if (!c2c_activeCall) return;
     
     c2c_isMuted = !c2c_isMuted;
-    c2c_activeCall.mute(c2c_isMuted);
+    // TODO: mute not a function
+    // c2c_activeCall.mute(c2c_isMuted);
+    
     
     if (c2c_muteButton) {
         if (c2c_isMuted) {
-            c2c_muteButton.appearance = "danger";
-            c2c_muteButton.querySelector('span').innerText = "Unmute";
+            c2c_muteButton.icon = "microphone-off";
+            c2c_muteButton.label = "Unmute";
         } else {
-            c2c_muteButton.appearance = "neutral";
-            c2c_muteButton.querySelector('span').innerText = "Mute";
+
+            c2c_muteButton.icon = "microphone";
+            c2c_muteButton.label = "Mute";
         }
     }
 }
@@ -1553,20 +1553,18 @@ function c2c_toggleMute() {
 // Toggle hold function
 function c2c_toggleHold() {
     if (!c2c_activeCall) return;
-    
+    debugger;
     c2c_isOnHold = !c2c_isOnHold;
     
     if (c2c_isOnHold) {
         c2c_activeCall.hold();
-        c2c_holdButton.appearance = "danger";
-        c2c_holdButton.querySelector('span').innerText = "Resume";
+        c2c_holdButton.label = "Resume";
         if (c2c_callStatusTag) {
             c2c_callStatusTag.textContent = "Call on hold";
         }
     } else {
         c2c_activeCall.unhold();
-        c2c_holdButton.appearance = "neutral";
-        c2c_holdButton.querySelector('span').innerText = "Hold";
+        c2c_holdButton.label = "Hold";
         if (c2c_callStatusTag) {
             c2c_callStatusTag.textContent = "Call in progress";
         }
@@ -1651,20 +1649,20 @@ async function c2c_initDeviceSelections() {
         // Initialize the dropdowns
         c2c_populateDeviceDropdown('microphone');
         c2c_populateDeviceDropdown('speaker');
-        c2c_populateDeviceDropdown('camera');
+        // c2c_populateDeviceDropdown('camera');
         
         // Add change listeners to update device selection
-        document.querySelector('#microphone_dev select').addEventListener('change', function() {
+        document.querySelector('#microphone_dev mc-select').addEventListener('optionselected', function() {
             c2c_changeDevice('microphone', this.selectedIndex);
         });
         
-        document.querySelector('#speaker_dev select').addEventListener('change', function() {
+        document.querySelector('#speaker_dev mc-select').addEventListener('optionselected', function() {
             c2c_changeDevice('speaker', this.selectedIndex);
         });
         
-        document.querySelector('#camera_dev select').addEventListener('change', function() {
-            c2c_changeDevice('camera', this.selectedIndex);
-        });
+        // document.querySelector('#camera_dev mc-select').addEventListener('optionselected', function() {
+        //     c2c_changeDevice('camera', this.selectedIndex);
+        // });
         
     } catch (e) {
         c2c_ac_log('Error initializing device selections', e);
@@ -1674,8 +1672,8 @@ async function c2c_initDeviceSelections() {
 // Populate device dropdown from c2c_devices
 function c2c_populateDeviceDropdown(deviceType) {
     const device = c2c_devices.getDevice(deviceType);
-    const selector = document.querySelector(`#${deviceType}_dev select`);
-    
+    const selector = document.querySelector(`#${deviceType}_dev mc-select`);
+
     // Clear select push-down list
     while (selector.firstChild) {
         selector.removeChild(selector.firstChild);
@@ -1687,16 +1685,16 @@ function c2c_populateDeviceDropdown(deviceType) {
         return;
     }
     
-    selector.disabled = false;
+    // selector.disabled = false;
     
     // Loop by device labels and add option elements
     for (let ix = 0; ix < device.list.length; ix++) {
         let dev = device.list[ix];
-        let option = document.createElement("option");
-        option.text = dev.label || `${deviceType.charAt(0).toUpperCase() + deviceType.slice(1)} ${ix + 1}`;
+        let option = document.createElement("mc-option");
+        option.innerHTML = dev.label || `${deviceType.charAt(0).toUpperCase() + deviceType.slice(1)} ${ix + 1}`;
         option.value = ix.toString();
         option.selected = (device.index === ix);
-        selector.add(option);
+        selector.appendChild(option);
     }
     
     // Hide camera selection for audio only call

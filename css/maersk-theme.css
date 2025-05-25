@@ -378,9 +378,3 @@
   background-color: var(--mds-color-background-primary);
   font-size: 0.875rem;
 }
-
-@media (min-width: 576px) {
-  .device-selection-form {
-    grid-template-columns: repeat(3, 1fr);
-  }
-} 
