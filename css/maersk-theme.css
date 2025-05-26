@@ -3,7 +3,6 @@
 
 /* Contact Support container */
 .contact-support {
-  max-width: 600px;
   margin: 2rem auto;
   padding: 1rem;
 }
@@ -213,78 +212,6 @@
   width: 100%;
 }
 
-#start-call-btn {
-  width: 100%;
-  margin-top: 1rem;
-  height: 3rem;
-  font-weight: 500;
-}
-
-/* Select devices div */
-#c2c_select_devices_div {
-  width: 100%;
-  max-width: 400px;
-  border: 1px solid var(--mds-color-border-subtle);
-  border-radius: var(--mds-border-radius-medium);
-  padding: 1.5rem;
-  margin: 1rem 0;
-  background-color: var(--mds-color-background-secondary);
-}
-
-#c2c_select_devices_div fieldset {
-  border: none;
-  padding: 0;
-  margin: 0;
-}
-
-#c2c_select_devices_div legend {
-  font-weight: var(--mds-font-weight-bold);
-  margin-bottom: 1rem;
-}
-
-#c2c_select_devices_div select {
-  width: 100%;
-  padding: 0.5rem;
-  margin-bottom: 1rem;
-  border: 1px solid var(--mds-color-border-primary);
-  border-radius: var(--mds-border-radius-small);
-}
-
-#select_devices_done_btn {
-  margin-top: 1rem;
-  width: 100%;
-}
-
-/* Keypad styling */
-#c2c_keypad_div {
-  width: 100%;
-  max-width: 400px;
-  border: 1px solid var(--mds-color-border-subtle);
-  border-radius: var(--mds-border-radius-medium);
-  padding: 1.5rem;
-  margin: 1rem 0;
-  background-color: var(--mds-color-background-secondary);
-}
-
-#c2c_keypad_table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 5px;
-}
-
-#c2c_keypad_table td {
-  text-align: center;
-  padding: 1rem;
-  border-radius: var(--mds-border-radius-small);
-  background-color: var(--mds-color-background-tertiary);
-  cursor: pointer;
-  font-weight: 500;
-}
-
-#c2c_keypad_table td:hover {
-  background-color: var(--mds-color-background-interactive-hover);
-}
-
 /* Status line */
 #c2c_status_line {
   width: 100%;
@@ -296,85 +223,8 @@
   text-align: center;
 }
 
-/* Video display */
-#c2c_video_div {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-#c2c_video_div video {
-  border-radius: var(--mds-border-radius-medium);
-  max-width: 100%;
-}
-
-/* Avatar circle for call screen */
-.avatar-circle {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background-color: #f1f1f1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .support-info {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .call-controls {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .call-controls mc-button {
-    width: 100%;
-  }
-}
-
-/* Device Selection Area */
-.device-selection-area {
-  width: 100%;
-  display: flex !important;
-  flex-direction: column;
-  gap: 1rem;
-}
 
 .device-selection-title {
-  font-size: 1rem;
-  font-weight: 500;
-  margin: 0 0 1rem 0;
-  color: var(--mds-color-text-primary);
-}
-
-.device-selection-form {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-.device-select-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.device-select-group label {
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: var(--mds-color-text-primary);
-}
-
-.device-select-group select {
-  width: 100%;
-  padding: 0.625rem;
-  border: 1px solid var(--mds-color-border-primary);
-  border-radius: 4px;
-  background-color: var(--mds-color-background-primary);
-  font-size: 0.875rem;
+  margin-bottom: 1rem !important;
+  text-align: left;
 }

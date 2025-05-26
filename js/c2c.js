@@ -46,21 +46,9 @@ let c2c_token = null;
 let c2c_devices = null;         // optional select devices feature, not for all OS/browsers.
 let c2c_remoteVideoDeviceId = undefined; // last associated deviceId
 let c2c_isSelfVideo = false;
+let c2c_callTimer = null;       // interval timer for updating call duration display
 
 // HTML element references
-let c2c_callInProgressDiv = null;
-let c2c_preCallSection = null;
-let c2c_callStatusTag = null;
-let c2c_callTimer = null;
-let c2c_muteButton = null;
-let c2c_holdButton = null;
-let c2c_volumeSlider = null;
-let c2c_volumePercentage = null;
-let c2c_startCallButton = null;
-let c2c_callTimerInterval = null;
-let c2c_callStartTime = null;
-let c2c_isMuted = false;
-let c2c_isOnHold = false;
 
 // Optional connection speed. Used if testCallEnabled in config.js
 let c2c_connectionSpeedDiv = null;
@@ -76,6 +64,12 @@ let c2c_selectDevicesButton = null;
 // Keypad. Used if dtmfKeypadEnabled in config.js
 let c2c_keypadButton = null;
 let c2c_keypadDiv = null;
+
+// Mute button for audio control during calls
+let c2c_muteButton = null;
+
+// Hold button for call hold/resume during calls
+let c2c_holdButton = null;
 
 // Test call button. Used if testCallEnabled in config.js
 let c2c_testButton = null;
@@ -153,9 +147,6 @@ async function c2c_startPhone() {
         }
 
         await c2c_devices.enumerate(false);
-        
-        // Initialize the device selection UI
-        await c2c_initDeviceSelections();
     }
 
     // Optional url parameters: 'call', 'dtmf', 'delay', 'server', 'domain', 'logger', 'token' E.g. ?call=user1&delay=2000&dtmf=1234%23&server=sbc.audiocodes.com
@@ -222,8 +213,22 @@ async function c2c_startPhone() {
 
     // Set buttons handlers
     c2c_callButton.onclick = function () { c2c_buttonHandler('call button', c2c_callButtonHandler); }
+    
+    // Set handlers for both start and end call buttons
+    let startCallBtn = document.getElementById('start-call-btn');
+    let endCallBtn = document.getElementById('c2c_call_btn');
+    if (startCallBtn && startCallBtn !== c2c_callButton) {
+        startCallBtn.onclick = function () { c2c_buttonHandler('start call button', c2c_callButtonHandler); }
+    }
+    if (endCallBtn && endCallBtn !== c2c_callButton) {
+        endCallBtn.onclick = function () { c2c_buttonHandler('end call button', c2c_callButtonHandler); }
+    }
+    
+    
     if (c2c_selectDevicesButton) c2c_selectDevicesButton.onclick = function () { c2c_buttonHandler('select devices button', c2c_selectDevices); }
     if (c2c_keypadButton) c2c_keypadButton.onclick = function () { c2c_buttonHandler('keypad show/hide button', c2c_keypadToggle); }
+    if (c2c_muteButton) c2c_muteButton.onclick = function () { c2c_buttonHandler('mute/unmute button', c2c_muteToggle); }
+    if (c2c_holdButton) c2c_holdButton.onclick = function () { c2c_buttonHandler('hold/resume button', c2c_holdToggle); }
     if (c2c_testButton) c2c_testButton.onclick = function () { c2c_buttonHandler('test button', c2c_testButtonHandler); }
     if (c2c_cameraButton) c2c_cameraButton.onclick = function () { c2c_buttonHandler('webcam on/off button', c2c_cameraToggle); }
     if (c2c_selfVideoChk) c2c_selfVideoChk.onclick = function () { c2c_buttonHandler('show local video', c2c_selfVideoToggle); }
@@ -258,14 +263,6 @@ async function c2c_startPhone() {
     try {
         c2c_hasCamera = await c2c_phone.checkAvailableDevices();
         c2c_ac_log(`Camera is ${c2c_hasCamera ? 'present' : 'missing'}`);
-        
-        // Update device dropdowns after permissions are granted
-        if (c2c_devices) {
-            await c2c_devices.enumerate(true);
-            c2c_populateDeviceDropdown('microphone');
-            c2c_populateDeviceDropdown('speaker');
-            // c2c_populateDeviceDropdown('camera');
-        }
     } catch (e) {
         if (c2c_config.allowCallWithoutMicrophone) {
             c2c_ac_log('Microphone is missed. Used "allowCallWithoutMicrophone" mode');
@@ -334,6 +331,38 @@ async function c2c_startPhone() {
     if (c2c_devices) {
         let spkrId = c2c_devices.getSelected('speaker').deviceId;
         c2c_audioPlayer.setSpeakerId(spkrId);
+        
+        // Populate the main interface device selectors
+        for (let name of c2c_devices.names) {
+            c2c_fillDeviceList(name);
+        }
+        
+        // Set up event handlers for device changes
+        for (let name of c2c_devices.names) {
+            let selector = document.querySelector(`mc-select[name="${name}"]`) || 
+                          document.querySelector(`#${name}_dev mc-select`);
+            if (selector) {
+                selector.addEventListener('change', function() {
+                    let index = parseInt(this.value);
+                    if (!isNaN(index)) {
+                        c2c_devices.setSelectedIndex(name, index);
+                        c2c_ac_log(`Device changed: ${name} set to index ${index}`);
+                        
+                        // Update constraints
+                        if (name === 'microphone') {
+                            let micId = c2c_devices.getSelected('microphone').deviceId;
+                            c2c_phone.setConstraint('audio', 'deviceId', micId);
+                        } else if (name === 'camera') {
+                            let camId = c2c_devices.getSelected('camera').deviceId;
+                            c2c_phone.setConstraint('video', 'deviceId', camId);
+                        } else if (name === 'speaker') {
+                            let spkrId = c2c_devices.getSelected('speaker').deviceId;
+                            c2c_audioPlayer.setSpeakerId(spkrId);
+                        }
+                    }
+                });
+            }
+        }
     }
 
     c2c_gui_phoneBeforeCall();
@@ -375,9 +404,10 @@ function c2c_getHTMLPageReferences() {
         return false;
     }
 
-    c2c_callButton = document.getElementById('c2c_call_btn');
+    // Try to get the start call button first, then the end call button
+    c2c_callButton = document.getElementById('start-call-btn') || document.getElementById('c2c_call_btn');
     if (!c2c_callButton) {
-        c2c_ac_log('Fatal error: HTML missed button id="c2c_call_btn"');
+        c2c_ac_log('Fatal error: HTML missed button id="start-call-btn" or "c2c_call_btn"');
         return false;
     }
 
@@ -411,6 +441,12 @@ function c2c_getHTMLPageReferences() {
         c2c_keypadButton = document.getElementById('c2c_keypad_btn');
         c2c_keypadDiv = document.getElementById('c2c_keypad_div');
     }
+
+    // Get mute button reference
+    c2c_muteButton = document.getElementById('c2c_mute_btn');
+
+    // Get hold button reference
+    c2c_holdButton = document.getElementById('c2c_hold_btn');
 
     // Get HTML elements for testCallEnabled mode
     if (c2c_config.testCallEnabled) {
@@ -459,10 +495,11 @@ function c2c_getHTMLPageReferences() {
 
     // Set click events for keypad buttons
     if (c2c_config.dtmfKeypadEnabled) {
-        let table = document.getElementById('c2c_keypad_table');
-        for (let row of table.getElementsByTagName('tr')) {
-            for (let cell of row.getElementsByTagName('td')) {
-                cell.onclick = () => c2c_sendDtmf(cell.innerText);
+        let keypadGrid = document.getElementById('c2c_keypad_grid');
+        if (keypadGrid) {
+            let keypadButtons = keypadGrid.querySelectorAll('.keypad-btn');
+            for (let button of keypadButtons) {
+                button.addEventListener('click', () => c2c_sendDtmf(button.getAttribute('data-key')));
             }
         }
     }
@@ -483,41 +520,6 @@ function c2c_getHTMLPageReferences() {
         c2c_selfVideoChk.checked = c2c_isSelfVideo;
     }
 
-    // Call in progress UI elements
-    c2c_callInProgressDiv = document.getElementById('call-in-progress');
-    c2c_preCallSection = document.getElementById('pre-call-section');
-    c2c_callStatusTag = document.getElementById('call-status-tag');
-    c2c_callTimer = document.getElementById('call-timer');
-    c2c_muteButton = document.getElementById('mute-btn');
-    c2c_holdButton = document.getElementById('hold-btn');
-    c2c_volumeSlider = document.getElementById('volume-slider');
-    c2c_volumePercentage = document.getElementById('volume-percentage');
-    c2c_startCallButton = document.getElementById('start-call-btn');
-    
-    c2c_callButtonTitle = `Call ${c2c_config.call}`;
-    
-    // Handle the start call button
-    if (c2c_startCallButton) {
-        c2c_startCallButton.onclick = function() { c2c_buttonHandler('start call button', function() { c2c_call(true); }); }
-    }
-    
-    // Handle mute button
-    if (c2c_muteButton) {
-        c2c_muteButton.onclick = function() { c2c_buttonHandler('mute button', c2c_toggleMute); }
-    }
-    
-    // Handle hold button
-    if (c2c_holdButton) {
-        c2c_holdButton.onclick = function() { c2c_buttonHandler('hold button', c2c_toggleHold); }
-    }
-    
-    // Handle volume slider
-    if (c2c_volumeSlider) {
-        c2c_volumeSlider.addEventListener('input', function() {
-            c2c_updateVolume(c2c_volumeSlider.value);
-        });
-    }
-    
     return true;
 }
 
@@ -565,6 +567,50 @@ function c2c_stringDropCharacters(text, removeChars) {
 }
 
 function c2c_delay(ms) { return new Promise((r) => { setTimeout(() => r(), ms); }); }
+
+// Format duration in seconds to MM:SS format
+function c2c_formatDuration(seconds) {
+    let minutes = Math.floor(seconds / 60);
+    let remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+// Start the call timer
+function c2c_startCallTimer() {
+    c2c_stopCallTimer(); // Make sure any existing timer is stopped
+    
+    let callTimerElement = document.getElementById('call-timer');
+    if (!callTimerElement || !c2c_activeCall) {
+        return;
+    }
+    
+    c2c_callTimer = setInterval(() => {
+        if (c2c_activeCall && c2c_activeCall.isEstablished()) {
+            let duration = Math.floor(c2c_activeCall.duration());
+            callTimerElement.textContent = c2c_formatDuration(duration);
+        }
+    }, 1000);
+    
+    // Initial update
+    if (c2c_activeCall && c2c_activeCall.isEstablished()) {
+        let duration = Math.floor(c2c_activeCall.duration());
+        callTimerElement.textContent = c2c_formatDuration(duration);
+    }
+}
+
+// Stop the call timer
+function c2c_stopCallTimer() {
+    if (c2c_callTimer) {
+        clearInterval(c2c_callTimer);
+        c2c_callTimer = null;
+    }
+    
+    // Reset timer display
+    let callTimerElement = document.getElementById('call-timer');
+    if (callTimerElement) {
+        callTimerElement.textContent = '00:00';
+    }
+}
 
 function c2c_timestamp() {
     let date = new Date();
@@ -705,73 +751,76 @@ function c2c_initStack(account) {
         },
 
         callTerminated: function (call, message, cause, redirectTo) {
-            c2c_ac_log(`phone>>> call terminated callback, cause=${cause}`);
-            c2c_activeCall = null;
-            if (cause === 'Redirected') {
-                c2c_ac_log(`Redirect call to ${redirectTo}`);
-                c2c_makeCall(redirectTo, c2c_videoOption());
-                return;
-            }
+            // c2c_ac_log(`phone>>> call terminated callback, cause=${cause}`);
+            // c2c_activeCall = null;
+            // // Stop the call timer
+            // c2c_stopCallTimer();
+            
+            // if (cause === 'Redirected') {
+            //     c2c_ac_log(`Redirect call to ${redirectTo}`);
+            //     c2c_makeCall(redirectTo, c2c_videoOption());
+            //     return;
+            // }
 
-            c2c_audioPlayer.stop();
-            if (c2c_isRegularCall) {
-                let terminatedInfo = cause;  // '<span style="font-weight:bold">' + c2c_config.call + '</span> ' + cause;
-                c2c_info(terminatedInfo, true);
-                if (call.isOutgoing() && !call.wasAccepted()) {
-                    // Busy tone.
-                    c2c_audioPlayer.play(c2c_soundConfig.play.busy);
-                } else {
-                    // Disconnect tone.
-                    c2c_audioPlayer.play(c2c_soundConfig.play.disconnect);
-                }
+            // c2c_audioPlayer.stop();
+            // if (c2c_isRegularCall) {
+            //     let terminatedInfo = cause;  // '<span style="font-weight:bold">' + c2c_config.call + '</span> ' + cause;
+            //     c2c_info(terminatedInfo, true);
+            //     if (call.isOutgoing() && !call.wasAccepted()) {
+            //         // Busy tone.
+            //         c2c_audioPlayer.play(c2c_soundConfig.play.busy);
+            //     } else {
+            //         // Disconnect tone.
+            //         c2c_audioPlayer.play(c2c_soundConfig.play.disconnect);
+            //     }
 
-            } else {
-                if (!call.wasAccepted()) { // sent or received SIP 2xx response
-                    c2c_ac_log('Warning: Test call is failed !');
-                    c2c_info('Test line is failed');
-                } else if (c2c_config.testCallSBCScore) {
-                    // Get BYE X-VoiceQuality header.
-                    try {
-                        if (!message)
-                            throw 'No BYE message';
-                        let vq = getXVoiceQuality(message);
-                        if (vq) {
-                            let text = c2c_config.testCallQualityText[vq.color];
-                            c2c_ac_log(`BYE: "X-VoiceQuality" header: score="${vq.score}", color="${vq.color}" text="${text}"`);
-                            if (c2c_testCallQualityDiv) {
-                                c2c_testCallQualityDiv.innerHTML = 'Test call quality: <span style="color:' +
-                                    vq.color + ';font-weight:bold">' + text + '</span>';
-                            }
-                            c2c_info('Test passed', true);
-                        } else {
-                            c2c_ac_log('BYE: missing "X-VoiceQuality" header');
-                            throw 'BYE: missing "X-VoiceQuality" header';
-                        }
-                    } catch (e) {
-                        c2c_ac_log('Warning: cannot take SBC voice quality information', e)
-                        c2c_info('Test failed', true);
-                    }
-                }
-            }
+            // } else {
+            //     if (!call.wasAccepted()) { // sent or received SIP 2xx response
+            //         c2c_ac_log('Warning: Test call is failed !');
+            //         c2c_info('Test line is failed');
+            //     } else if (c2c_config.testCallSBCScore) {
+            //         // Get BYE X-VoiceQuality header.
+            //         try {
+            //             if (!message)
+            //                 throw 'No BYE message';
+            //             let vq = getXVoiceQuality(message);
+            //             if (vq) {
+            //                 let text = c2c_config.testCallQualityText[vq.color];
+            //                 c2c_ac_log(`BYE: "X-VoiceQuality" header: score="${vq.score}", color="${vq.color}" text="${text}"`);
+            //                 if (c2c_testCallQualityDiv) {
+            //                     c2c_testCallQualityDiv.innerHTML = 'Test call quality: <span style="color:' +
+            //                         vq.color + ';font-weight:bold">' + text + '</span>';
+            //                 }
+            //                 c2c_info('Test passed', true);
+            //             } else {
+            //                 c2c_ac_log('BYE: missing "X-VoiceQuality" header');
+            //                 throw 'BYE: missing "X-VoiceQuality" header';
+            //             }
+            //         } catch (e) {
+            //             c2c_ac_log('Warning: cannot take SBC voice quality information', e)
+            //             c2c_info('Test failed', true);
+            //         }
+            //     }
+            // }
 
-            if (c2c_sbcDisconnectDelay === 0) {
-                c2c_phone.deinit();
-            } else {
-                c2c_sbcDisconnectTimer = setTimeout(() => {
-                    c2c_ac_log('The time interval between the end of the call and SBC disconnection is over');
-                    c2c_phone.deinit();
-                }, c2c_sbcDisconnectDelay * 1000);
-            }
+            // if (c2c_sbcDisconnectDelay === 0) {
+            //     c2c_phone.deinit();
+            // } else {
+            //     c2c_sbcDisconnectTimer = setTimeout(() => {
+            //         c2c_ac_log('The time interval between the end of the call and SBC disconnection is over');
+            //         c2c_phone.deinit();
+            //     }, c2c_sbcDisconnectDelay * 1000);
+            // }
 
-            c2c_gui_phoneBeforeCall();
+            // c2c_gui_phoneBeforeCall();
 
-            // Hide black rectangles after video call
-            c2c_setLocalVideoVisible(false);
-            c2c_setRemoteVideoVisible(false);
-            c2c_localVideo.srcObject = null;
-            c2c_remoteVideo.srcObject = null;
+            // // Hide black rectangles after video call
+            // c2c_setLocalVideoVisible(false);
+            // c2c_setRemoteVideoVisible(false);
+            // c2c_localVideo.srcObject = null;
+            // c2c_remoteVideo.srcObject = null;
 
-            c2c_restoreCall = null;
+            // c2c_restoreCall = null;
         },
 
         callConfirmed: async function (call, message, cause) {
@@ -785,6 +834,8 @@ function c2c_initStack(account) {
 
             if (c2c_isRegularCall) {
                 c2c_info('Call is established', true);
+                // Start the call timer
+                c2c_startCallTimer();
 
                 if (c2c_restoreCall !== null && c2c_restoreCall.hold.includes('remote')) {
                     c2c_ac_log('Restore remote hold');
@@ -849,6 +900,9 @@ function c2c_initStack(account) {
             } else {
                 c2c_gui_phoneDuringCall();
             }
+            
+            // Update hold button state when hold state changes
+            c2c_updateHoldButtonState();
         },
 
         callIncomingReinvite: function (call, start, request) {
@@ -959,7 +1013,10 @@ function c2c_videoOption() {
 function c2c_selectDevices() {
     c2c_ac_log('c2c_selectDevices()');
     c2c_info('');
-    document.getElementById('select_devices_done_btn').onclick = c2c_selectDevicesDone;
+    let doneBtn = document.getElementById('select_devices_done_btn');
+    if (doneBtn) {
+        doneBtn.onclick = c2c_selectDevicesDone;
+    }
     c2c_devices.enumerate(true)
         .catch((e) => {
             c2c_ac_log('getUserMedia() exception', e);
@@ -974,43 +1031,111 @@ function c2c_selectDevices() {
 
 function c2c_fillDeviceList(name) {
     let device = c2c_devices.getDevice(name); // name is one of 'microphone', 'speaker', 'camera', 'ringer'
-    let selector = document.querySelector(`#c2c_devices [name=${name}]`);
-    // Clear select push-down list
-    while (selector.firstChild) {
-        selector.removeChild(selector.firstChild);
+    
+    // Try multiple selectors to find the device selection element
+    let selector = document.querySelector(`#c2c_devices [name=${name}]`) || 
+                   document.querySelector(`#${name}_dev mc-select`) ||
+                   document.querySelector(`mc-select[name="${name}"]`) ||
+                   document.querySelector(`#${name}_dev_old select[name="${name}_old"]`);
+    
+    if (!selector) {
+        c2c_ac_log(`Warning: Device selector not found for ${name}`);
+        c2c_ac_log(`Tried selectors: #c2c_devices [name=${name}], #${name}_dev mc-select, mc-select[name="${name}"], #${name}_dev_old select[name="${name}_old"]`);
+        return;
     }
-    if (device.incomplete) {
-        selector.disabled = true;
-        c2c_ac_log(`Warning: To device selection let enable ${name} usage`);
+    
+    c2c_ac_log(`Found device selector for ${name}: ${selector.tagName} with ID: ${selector.id || 'none'}`);
+
+    // Handle mc-select components differently than regular select elements
+    if (selector.tagName.toLowerCase() === 'mc-select') {
+        // Clear mc-select options
+        const options = selector.querySelectorAll('mc-option');
+        options.forEach(option => option.remove());
+        
+        if (device.incomplete) {
+            selector.disabled = true;
+            c2c_ac_log(`Warning: To device selection let enable ${name} usage`);
+        } else {
+            selector.disabled = false;
+        }
+        
+        // Add mc-option elements for mc-select
+        for (let ix = 0; ix < device.list.length; ix++) {
+            let dev = device.list[ix];
+            let option = document.createElement("mc-option");
+            option.setAttribute('value', ix.toString());
+            option.textContent = dev.label;
+            if (device.index === ix) {
+                selector.value = ix.toString();
+            }
+            selector.appendChild(option);
+        }
     } else {
-        selector.disabled = false;
-    }
-    // Loop by device labels and add option elements.
-    for (let ix = 0; ix < device.list.length; ix++) {
-        let dev = device.list[ix]
-        let option = document.createElement("option");
-        option.text = dev.label;      // device name
-        option.value = ix.toString(); // index in device list
-        option.selected = (device.index === ix); // selected device
-        selector.add(option);
+        // Handle regular select elements (old method)
+        while (selector.firstChild) {
+            selector.removeChild(selector.firstChild);
+        }
+        if (device.incomplete) {
+            selector.disabled = true;
+            c2c_ac_log(`Warning: To device selection let enable ${name} usage`);
+        } else {
+            selector.disabled = false;
+        }
+        // Loop by device labels and add option elements.
+        for (let ix = 0; ix < device.list.length; ix++) {
+            let dev = device.list[ix]
+            let option = document.createElement("option");
+            option.text = dev.label;      // device name
+            option.value = ix.toString(); // index in device list
+            option.selected = (device.index === ix); // selected device
+            selector.add(option);
+        }
     }
 
     // Hide camera selection for audio only call.
     if (name === 'camera' && c2c_config.type === 'audio') {
-        document.getElementById('camera_dev').style.display = 'none';
+        let cameraDiv = document.getElementById('camera_dev') || document.getElementById('camera_dev_old');
+        if (cameraDiv) cameraDiv.style.display = 'none';
         return;
     }
 
-    document.getElementById(`${name}_dev`).style.display = (device.list.length > 1) ? 'block' : 'none';
+    let deviceDiv = document.getElementById(`${name}_dev`) || document.getElementById(`${name}_dev_old`);
+    if (deviceDiv) {
+        deviceDiv.style.display = (device.list.length > 1) ? 'block' : 'none';
+    }
 }
 
 function c2c_selectDevicesDone() {
     for (let name of c2c_devices.names) {
-        let selectElement = document.querySelector(`#c2c_devices [name=${name}]`);
-        let index = selectElement.selectedIndex;
-        if (index !== -1) { // -1 indicates that no element is selected
-            let n = selectElement.options[index].value;
-            c2c_devices.setSelectedIndex(name, parseInt(n));
+        let selectElement = document.querySelector(`#c2c_devices [name=${name}]`) || 
+                           document.querySelector(`#${name}_dev mc-select`) ||
+                           document.querySelector(`mc-select[name="${name}"]`) ||
+                           document.querySelector(`#${name}_dev_old select[name="${name}_old"]`);
+        
+        if (!selectElement) {
+            c2c_ac_log(`Warning: Could not find select element for ${name} device`);
+            continue;
+        }
+        
+        let index = -1;
+        
+        // Handle mc-select elements
+        if (selectElement.tagName.toLowerCase() === 'mc-select') {
+            let value = selectElement.value;
+            if (value !== undefined && value !== null && value !== '') {
+                index = parseInt(value);
+            }
+        } else {
+            // Handle regular select elements
+            index = selectElement.selectedIndex;
+            if (index !== -1) { // -1 indicates that no element is selected
+                let n = selectElement.options[index].value;
+                index = parseInt(n);
+            }
+        }
+        
+        if (index !== -1) {
+            c2c_devices.setSelectedIndex(name, index);
         }
     }
 
@@ -1191,15 +1316,10 @@ function c2c_makeCall(callTo, videoMode, extraHeaders = []) {
 }
 
 function c2c_hangupCall() {
-    if (c2c_activeCall) {
+    if (c2c_activeCall !== null) {
         c2c_activeCall.terminate();
+        c2c_activeCall = null;
     }
-    
-    // Stop the call timer
-    c2c_stopCallTimer();
-    
-    // Reset UI to pre-call state
-    c2c_gui_phoneBeforeCall();
 }
 
 
@@ -1301,6 +1421,73 @@ function c2c_sendDtmf(key) {
     }
 }
 
+function c2c_muteToggle() {
+    if (c2c_activeCall) {
+        let isMuted = c2c_activeCall.isAudioMuted();
+        c2c_ac_log(`Toggling mute: currently ${isMuted ? 'muted' : 'unmuted'}`);
+        
+        // Toggle mute state
+        c2c_activeCall.muteAudio(!isMuted);
+        
+        // Update button appearance and text
+        c2c_updateMuteButtonState();
+    }
+}
+
+function c2c_updateMuteButtonState() {
+    if (c2c_activeCall && c2c_muteButton) {
+        let isMuted = c2c_activeCall.isAudioMuted();
+        
+        if (isMuted) {
+            c2c_muteButton.setAttribute('appearance', 'danger');
+            c2c_muteButton.setAttribute('icon', 'microphone-off');
+            c2c_muteButton.textContent = 'Unmute';
+            c2c_muteButton.setAttribute('title', 'Unmute Microphone');
+        } else {
+            c2c_muteButton.setAttribute('appearance', 'neutral');
+            c2c_muteButton.setAttribute('icon', 'microphone');
+            c2c_muteButton.textContent = 'Mute';
+            c2c_muteButton.setAttribute('title', 'Mute Microphone');
+        }
+    }
+}
+
+function c2c_holdToggle() {
+    if (c2c_activeCall) {
+        let isOnHold = c2c_activeCall.isLocalHold();
+        c2c_ac_log(`Toggling hold: currently ${isOnHold ? 'on hold' : 'active'}`);
+        
+        // Toggle hold state - hold() method toggles the state
+        c2c_activeCall.hold(!isOnHold)
+            .then(() => {
+                c2c_ac_log(`Hold state changed successfully`);
+                // Update button state after successful hold operation
+                c2c_updateHoldButtonState();
+            })
+            .catch((error) => {
+                c2c_ac_log('Hold operation failed:', error);
+            });
+    }
+}
+
+function c2c_updateHoldButtonState() {
+    if (c2c_activeCall && c2c_holdButton) {
+        let isOnHold = c2c_activeCall.isLocalHold();
+        
+        if (isOnHold) {
+            c2c_holdButton.setAttribute('appearance', 'info');
+            c2c_holdButton.setAttribute('icon', 'play');
+            c2c_holdButton.textContent = 'Resume';
+            c2c_holdButton.setAttribute('title', 'Resume Call');
+        } else {
+            c2c_holdButton.setAttribute('appearance', 'neutral');
+            c2c_holdButton.setAttribute('icon', 'pause');
+            c2c_holdButton.textContent = 'Hold';
+            c2c_holdButton.setAttribute('title', 'Hold Call');
+        }
+    }
+}
+
 /*
    Web Designer should customize the code 
    to define HTML elements representation:
@@ -1314,7 +1501,13 @@ function c2c_sendDtmf(key) {
 function c2c_gui_phoneDisabled(msg) {
     c2c_ac_log(msg);
     c2c_callButton.disabled = true;
-    document.querySelector('#c2c_call_btn svg').setAttribute('class', 'c2c_call_svg_disabled')
+    
+    // Handle both button types
+    let startCallBtn = document.getElementById('start-call-btn');
+    let endCallBtn = document.getElementById('c2c_call_btn');
+    if (startCallBtn) startCallBtn.disabled = true;
+    if (endCallBtn) endCallBtn.disabled = true;
+    
     c2c_widgetDiv.className = 'c2c_widget_disabled';
     if (c2c_config.testCallEnabled) {
         c2c_testButton.disabled = true;
@@ -1322,12 +1515,17 @@ function c2c_gui_phoneDisabled(msg) {
 }
 
 function c2c_gui_phoneBeforeCall() {
-    // Show pre-call section, hide call-in-progress section
-    if (c2c_preCallSection) c2c_preCallSection.style.display = 'block';
-    if (c2c_callInProgressDiv) c2c_callInProgressDiv.style.display = 'none';
+    // Show optional form, if used
+    // document.getElementById('user_order').style.display = 'block';
     
-    // Make sure device selection area is visible
-    document.querySelector('.device-selection-area')?.style.setProperty('display', 'block');
+    // Stop any existing call timer
+    c2c_stopCallTimer();
+
+    // Remove call-active class to show service details
+    let supportCard = document.querySelector('.support-card');
+    if (supportCard) {
+        supportCard.classList.remove('call-active');
+    }
 
     if (c2c_connectionSpeedDiv && navigator.connection) {
         c2c_connectionSpeedDiv.style.display = 'block';
@@ -1337,8 +1535,10 @@ function c2c_gui_phoneBeforeCall() {
         c2c_testCallQualityDiv.style.display = 'block';
     }
 
-    // Hide the old device selection
-    if (c2c_selectDevicesDiv) {
+    // Show select devices button
+    if (c2c_config.selectDevicesEnabled) {
+        c2c_selectDevicesButton.style.display = 'inline-block';
+        c2c_selectDevicesButton.disabled = false;
         c2c_selectDevicesDiv.style.display = 'none';
     }
 
@@ -1348,21 +1548,30 @@ function c2c_gui_phoneBeforeCall() {
         c2c_testButton.disabled = false;
     }
 
-    // Show call button
-    c2c_callButton.style.display = 'inline-block';
-    c2c_callButton.disabled = false;
+    // Show call button - handle both start-call-btn and c2c_call_btn
+    let startCallBtn = document.getElementById('start-call-btn');
+    let endCallBtn = document.getElementById('c2c_call_btn');
     
-    // Set call button appearance
-    if (c2c_startCallButton) {
-        c2c_startCallButton.disabled = false;
+    if (startCallBtn) {
+        startCallBtn.style.display = 'inline-block';
+        startCallBtn.disabled = false;
+        c2c_callButton = startCallBtn;
     }
     
-    // Reset mute and hold states
-    c2c_isMuted = false;
-    c2c_isOnHold = false;
+    if (endCallBtn) {
+        endCallBtn.style.display = 'none'; // Hide end call button during before call state
+    }
     
+    // Show pre-call section and hide call-in-progress section
+    let preCallSection = document.getElementById('pre-call-section');
+    let callInProgress = document.getElementById('call-in-progress');
+    if (preCallSection) preCallSection.style.display = 'block';
+    if (callInProgress) callInProgress.style.display = 'none';
+    
+    c2c_callButton.disabled = false;
+    c2c_callButton.title = c2c_callButtonTitle;
     // Call button handler
-    c2c_callButtonHandler = function () { c2c_hangupCall(); }
+    c2c_callButtonHandler = function () { c2c_call(true); }
 
     // Show audio/video checkbox
     if (c2c_videoSpan) {
@@ -1382,10 +1591,22 @@ function c2c_gui_phoneBeforeCall() {
         }
     }
 
-    // Hide keypad and keypad button.
+    // Hide keypad and keypad button before call.
     if (c2c_keypadButton) {
         c2c_keypadButton.style.display = 'none';
+    }
+    if (c2c_keypadDiv) {
         c2c_keypadDiv.style.display = 'none';
+    }
+
+    // Hide mute button before call
+    if (c2c_muteButton) {
+        c2c_muteButton.style.display = 'none';
+    }
+
+    // Hide hold button before call
+    if (c2c_holdButton) {
+        c2c_holdButton.style.display = 'none';
     }
 
     // Hide show yourself checkbox
@@ -1406,7 +1627,11 @@ function c2c_gui_DeviceSelection() {
     if (c2c_testButton) {
         c2c_testButton.style.display = 'none';
     }
-    c2c_callButton.style.display = 'none';
+    // Hide both call buttons during device selection
+    let startCallBtn = document.getElementById('start-call-btn');
+    let endCallBtn = document.getElementById('c2c_call_btn');
+    if (startCallBtn) startCallBtn.style.display = 'none';
+    if (endCallBtn) endCallBtn.style.display = 'none';
     if (c2c_videoSpan) {
         c2c_videoSpan.style.display = 'none';
     }
@@ -1419,23 +1644,18 @@ function c2c_gui_DeviceSelection() {
 }
 
 function c2c_gui_phoneCalling() {
-    // Show call-in-progress section, hide pre-call section
-    if (c2c_preCallSection) c2c_preCallSection.style.display = 'none';
-    if (c2c_callInProgressDiv) c2c_callInProgressDiv.style.display = 'block';
-    
-    if (c2c_callStatusTag) {
-        c2c_callStatusTag.textContent = "Calling...";
+    // Hide optional order form.
+    // document.getElementById('user_order').style.display = 'none';
+
+    // Add call-active class to hide service details
+    let supportCard = document.querySelector('.support-card');
+    if (supportCard) {
+        supportCard.classList.add('call-active');
     }
-    
-    // Reset timer display
-    if (c2c_callTimer) {
-        c2c_callTimer.textContent = "00:00";
-    }
-    
-    // Hide device selection areas
-    document.querySelector('.device-selection-area')?.style.setProperty('display', 'none');
-    if (c2c_selectDevicesDiv) {
-        c2c_selectDevicesDiv.style.display = 'none';
+
+    // Hide select devices button
+    if (c2c_selectDevicesButton) {
+        c2c_selectDevicesButton.style.display = 'none';
     }
 
     if (c2c_isRegularCall) { // Is regular or test call ?
@@ -1450,25 +1670,32 @@ function c2c_gui_phoneCalling() {
             c2c_testButton.style.display = 'none';
         }
 
-        // Modify call button look (to hangup)
-        c2c_callButton.label = "End";
-        c2c_callButton.title = 'End call';
-
+        // Switch to end call button and hide start call button
+        let startCallBtn = document.getElementById('start-call-btn');
+        let endCallBtn = document.getElementById('c2c_call_btn');
+        let preCallSection = document.getElementById('pre-call-section');
+        let callInProgress = document.getElementById('call-in-progress');
+        
+        if (startCallBtn) startCallBtn.style.display = 'none';
+        if (preCallSection) preCallSection.style.display = 'none';
+        if (callInProgress) callInProgress.style.display = 'block';
+        
+        if (endCallBtn) {
+            endCallBtn.style.display = 'inline-block';
+            c2c_callButton = endCallBtn;
+        }
+        
         // Set the button handler to hangup.
         c2c_callButtonHandler = c2c_hangupCall;
-        
-        // Set initial states for mute and hold buttons
-        if (c2c_muteButton) {
-            c2c_muteButton.label = "Mute";
-        }
-        
-        if (c2c_holdButton) {
-            c2c_holdButton.label = "Hold";
-        }
 
         // Hide video check box span
         if (c2c_videoSpan) {
             c2c_videoSpan.style.display = 'none';
+        }
+        
+        // Hide keypad during calling state (will be shown when call is established)
+        if (c2c_keypadDiv) {
+            c2c_keypadDiv.style.display = 'none';
         }
     } else {
         // Clear previous value of call quality
@@ -1476,8 +1703,11 @@ function c2c_gui_phoneCalling() {
             c2c_testCallQualityDiv.innerHTML = '';
         }
 
-        // Hide call button
-        c2c_callButton.style.display = 'none';
+        // Hide call buttons during test call
+        let startCallBtn = document.getElementById('start-call-btn');
+        let endCallBtn = document.getElementById('c2c_call_btn');
+        if (startCallBtn) startCallBtn.style.display = 'none';
+        if (endCallBtn) endCallBtn.style.display = 'none';
 
         // Hide video check box span
         if (c2c_videoSpan) {
@@ -1488,25 +1718,18 @@ function c2c_gui_phoneCalling() {
 
 function c2c_gui_phoneOnRemoteHold() {
     c2c_ac_log('phone on remote hold');
-    
-    // Update call status
-    if (c2c_callStatusTag) {
-        c2c_callStatusTag.textContent = "Call on hold by agent";
-    }
+    // TODO: show the state
 }
 
 function c2c_gui_phoneDuringCall() {
-    // Update call status
-    if (c2c_callStatusTag) {
-        c2c_callStatusTag.textContent = "Call in progress";
-    }
-    
-    // Start the call timer
-    c2c_startCallTimer();
-    
     if (c2c_isRegularCall) {
         if (c2c_videoSpan) {
             c2c_videoSpan.style.display = 'none';
+        }
+        // Make sure we're using the end call button during the call
+        let endCallBtn = document.getElementById('c2c_call_btn');
+        if (endCallBtn) {
+            c2c_callButton = endCallBtn;
         }
 
         if (c2c_config.type === 'user_control' && c2c_hasCamera) {
@@ -1521,213 +1744,23 @@ function c2c_gui_phoneDuringCall() {
             c2c_keypadButton.style.display = 'inline-block';
         }
 
+        // Show mute button during call and update its state
+        if (c2c_muteButton) {
+            c2c_muteButton.style.display = 'inline-block';
+            c2c_updateMuteButtonState();
+        }
+
+        // Show hold button during call and update its state
+        if (c2c_holdButton) {
+            c2c_holdButton.style.display = 'inline-block';
+            c2c_updateHoldButtonState();
+        }
+
         if (c2c_selfVideoSpan && c2c_hasCamera && c2c_activeCall.hasSendVideo()) {
             c2c_selfVideoSpan.style.display = 'inline-block';
         } else {
             c2c_selfVideoSpan.style.display = 'none';
         }
-    }
-}
-
-// Toggle mute function
-function c2c_toggleMute() {
-    if (!c2c_activeCall) return;
-    
-    c2c_isMuted = !c2c_isMuted;
-    // TODO: mute not a function
-    // c2c_activeCall.mute(c2c_isMuted);
-    
-    
-    if (c2c_muteButton) {
-        if (c2c_isMuted) {
-            c2c_muteButton.icon = "microphone-off";
-            c2c_muteButton.label = "Unmute";
-        } else {
-
-            c2c_muteButton.icon = "microphone";
-            c2c_muteButton.label = "Mute";
-        }
-    }
-}
-
-// Toggle hold function
-function c2c_toggleHold() {
-    if (!c2c_activeCall) return;
-    debugger;
-    c2c_isOnHold = !c2c_isOnHold;
-    
-    if (c2c_isOnHold) {
-        c2c_activeCall.hold();
-        c2c_holdButton.label = "Resume";
-        if (c2c_callStatusTag) {
-            c2c_callStatusTag.textContent = "Call on hold";
-        }
-    } else {
-        c2c_activeCall.unhold();
-        c2c_holdButton.label = "Hold";
-        if (c2c_callStatusTag) {
-            c2c_callStatusTag.textContent = "Call in progress";
-        }
-    }
-}
-
-// Update volume display and set actual volume
-function c2c_updateVolume(value) {
-    const volumeLevel = parseInt(value);
-    
-    if (c2c_volumePercentage) {
-        c2c_volumePercentage.textContent = `${volumeLevel}%`;
-    }
-    
-    // Set actual audio volume if there's an active call
-    if (c2c_activeCall) {
-        // Try to adjust volume on audio elements
-        try {
-            // Method 1: Try to access remote audio element
-            const remoteStreams = c2c_activeCall.getRemoteStreams();
-            if (remoteStreams && remoteStreams.length > 0) {
-                const audioTracks = remoteStreams[0].getAudioTracks();
-                if (audioTracks && audioTracks.length > 0) {
-                    // We have audio tracks, but direct volume control is not supported
-                    // We need to adjust volume through any audio elements connected to this stream
-                    
-                    // Method 2: Try to find audio elements playing this stream
-                    const audioElements = document.querySelectorAll('audio');
-                    for (let i = 0; i < audioElements.length; i++) {
-                        audioElements[i].volume = volumeLevel / 100;
-                    }
-                    
-                    // Method 3: Alternative for AudioCodes specific implementation
-                    if (c2c_phone && typeof c2c_phone.setVolume === 'function') {
-                        c2c_phone.setVolume(volumeLevel / 100);
-                    }
-                }
-            }
-        } catch (error) {
-            c2c_ac_log('Error adjusting volume:', error);
-        }
-    }
-}
-
-// Start call timer
-function c2c_startCallTimer() {
-    c2c_callStartTime = new Date();
-    
-    // Clear any existing timer
-    if (c2c_callTimerInterval) {
-        clearInterval(c2c_callTimerInterval);
-    }
-    
-    // Update timer display every second
-    c2c_callTimerInterval = setInterval(function() {
-        if (!c2c_callTimer) return;
-        
-        const now = new Date();
-        const diff = now - c2c_callStartTime;
-        const minutes = Math.floor(diff / 60000);
-        const seconds = Math.floor((diff % 60000) / 1000);
-        
-        c2c_callTimer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }, 1000);
-}
-
-// Stop call timer
-function c2c_stopCallTimer() {
-    if (c2c_callTimerInterval) {
-        clearInterval(c2c_callTimerInterval);
-        c2c_callTimerInterval = null;
-    }
-}
-
-// Initialize device selections and populate dropdowns
-async function c2c_initDeviceSelections() {
-    if (!c2c_devices) return;
-    
-    try {
-        await c2c_devices.enumerate(true);
-        
-        // Initialize the dropdowns
-        c2c_populateDeviceDropdown('microphone');
-        c2c_populateDeviceDropdown('speaker');
-        // c2c_populateDeviceDropdown('camera');
-        
-        // Add change listeners to update device selection
-        document.querySelector('#microphone_dev mc-select').addEventListener('optionselected', function() {
-            c2c_changeDevice('microphone', this.selectedIndex);
-        });
-        
-        document.querySelector('#speaker_dev mc-select').addEventListener('optionselected', function() {
-            c2c_changeDevice('speaker', this.selectedIndex);
-        });
-        
-        // document.querySelector('#camera_dev mc-select').addEventListener('optionselected', function() {
-        //     c2c_changeDevice('camera', this.selectedIndex);
-        // });
-        
-    } catch (e) {
-        c2c_ac_log('Error initializing device selections', e);
-    }
-}
-
-// Populate device dropdown from c2c_devices
-function c2c_populateDeviceDropdown(deviceType) {
-    const device = c2c_devices.getDevice(deviceType);
-    const selector = document.querySelector(`#${deviceType}_dev mc-select`);
-
-    // Clear select push-down list
-    while (selector.firstChild) {
-        selector.removeChild(selector.firstChild);
-    }
-    
-    if (device.incomplete) {
-        selector.disabled = true;
-        c2c_ac_log(`Warning: To device selection let enable ${deviceType} usage`);
-        return;
-    }
-    
-    // selector.disabled = false;
-    
-    // Loop by device labels and add option elements
-    for (let ix = 0; ix < device.list.length; ix++) {
-        let dev = device.list[ix];
-        let option = document.createElement("mc-option");
-        option.innerHTML = dev.label || `${deviceType.charAt(0).toUpperCase() + deviceType.slice(1)} ${ix + 1}`;
-        option.value = ix.toString();
-        option.selected = (device.index === ix);
-        selector.appendChild(option);
-    }
-    
-    // Hide camera selection for audio only call
-    if (deviceType === 'camera' && c2c_config.type === 'audio') {
-        document.getElementById('camera_dev').style.display = 'none';
-    }
-}
-
-// Change selected device and apply the selection
-function c2c_changeDevice(deviceType, index) {
-    if (!c2c_devices) return;
-    
-    c2c_devices.setSelectedIndex(deviceType, index);
-    c2c_ac_log(`Changed ${deviceType} to index ${index}`);
-    
-    let selectedDevices = c2c_devices.store();
-    sessionStorage.setItem('c2c_selectedDevices', JSON.stringify(selectedDevices));
-    
-    // Apply the device selection
-    switch (deviceType) {
-        case 'microphone':
-            let micId = c2c_devices.getSelected('microphone').deviceId;
-            c2c_phone.setConstraint('audio', 'deviceId', micId);
-            break;
-        case 'camera':
-            let camId = c2c_devices.getSelected('camera').deviceId;
-            c2c_phone.setConstraint('video', 'deviceId', camId);
-            break;
-        case 'speaker':
-            let spkrId = c2c_devices.getSelected('speaker').deviceId;
-            c2c_audioPlayer.setSpeakerId(spkrId);
-            c2c_setRemoteVideoSinkId().catch(() => {});
-            break;
     }
 }
 
