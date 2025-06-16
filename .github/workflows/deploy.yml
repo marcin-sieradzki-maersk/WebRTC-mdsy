@@ -15,29 +15,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "18"
-          cache: "npm"
-
-      - name: Install Dependencies
-        run: npm ci
-
       - name: Build
+        env:
+          SBC_DOMAIN: ${{ secrets.SBC_DOMAIN || 'audiocodes.com' }}
+          SBC_ADDRESSES: ${{ secrets.SBC_ADDRESSES || 'wss://your-sbc-server.com:10081' }}
+          CALLER_ID: ${{ secrets.CALLER_ID || 'Anonymous' }}
+          CALLER_DISPLAY_NAME: ${{ secrets.CALLER_DISPLAY_NAME || 'Anonymous' }}
+          CALL_TO_NUMBER: ${{ secrets.CALL_TO_NUMBER || '+15164614104' }}
+          SBC_CREDENTIAL: ${{ secrets.SBC_CREDENTIAL || 'auth-token' }}
         run: |
-          # Create a production config file
+          # Create a production config file with environment variables
           echo "window.envConfig = {
-            domain: '${{ secrets.SBC_DOMAIN }}',
-            addresses: ['${{ secrets.SBC_ADDRESSES }}'],
-            caller: '${{ secrets.CALLER_ID }}',
-            callerDN: '${{ secrets.CALLER_DISPLAY_NAME }}',
-            call: '${{ secrets.CALL_TO_NUMBER }}',
-            credential: '${{ secrets.SBC_CREDENTIAL }}'
+            domain: '$SBC_DOMAIN',
+            addresses: ['$SBC_ADDRESSES'],
+            caller: '$CALLER_ID',
+            callerDN: '$CALLER_DISPLAY_NAME',
+            call: '$CALL_TO_NUMBER',
+            credential: '$SBC_CREDENTIAL'
           };" > conf/env-config.js
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: . # The folder the action should deploy
+          folder: . # The folder the action should deploy to
           branch: gh-pages # The branch the action should deploy to

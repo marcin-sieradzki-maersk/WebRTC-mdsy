@@ -8,38 +8,29 @@
     <link rel="stylesheet" href="../css/maersk-theme.css" />
     <link rel="icon" href="favicon.png" />
 
-    <!-- MDS Styles -->
+    <!-- MDS Styles from CDN -->
     <link
       rel="stylesheet"
-      href="/node_modules/@maersk-global/fonts/maeu/fonts.css"
+      href="https://assets.maerskline.com/mds/fonts/fonts-cdn.css"
     />
     <link
       rel="stylesheet"
-      href="/node_modules/@maersk-global/mds-design-tokens/maersk/light/css/design-tokens-px.css"
+      href="https://assets.maerskline.com/mds/latest/design-tokens/maersk/light/css/design-tokens-px.min.css"
     />
     <link
       rel="stylesheet"
-      href="/node_modules/@maersk-global/mds-foundations/css/foundations.css"
+      href="https://assets.maerskline.com/mds/latest/foundations/foundations.min.css"
     />
 
-    <!-- MDS Components -->
-    <script type="module">
-      import "@maersk-global/mds-components-core/mc-button";
-      import "@maersk-global/mds-components-core/mc-icon";
-      import "@maersk-global/mds-components-core/mc-checkbox";
-      import "@maersk-global/mds-components-core/mc-card";
-      import "@maersk-global/mds-components-core/mc-top-bar";
-      import "@maersk-global/mds-components-core/mc-select";
-      import "@maersk-global/mds-components-core/mc-select-native";
-      import "@maersk-global/mds-components-core/mc-option";
-      import "@maersk-global/mds-components-core/mc-tag";
-      import "@maersk-global/mds-components-core/mc-avatar";
-      import { MdsConfig } from "@maersk-global/mds-config";
+    <!-- MDS Components from CDN -->
+    <script
+      type="module"
+      src="https://assets.maerskline.com/mds/latest/components-core/index.bundle.esm.min.js"
+    ></script>
 
-      // Configure the icons path
-      MdsConfig.iconsDynamicImportPath = "/node_modules/";
-    </script>
-
+    <!-- Load environment configuration first -->
+    <script defer src="../conf/env-config.js"></script>
+    
     <!-- AudioCodes WebRTC scripts -->
     <script type="module" src="../src/main.js"></script>
     <script defer src="../conf/config.js"></script>

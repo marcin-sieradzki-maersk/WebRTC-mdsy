@@ -1,21 +1,5 @@
-import '@maersk-global/fonts/maeu/fonts.css';
-import '@maersk-global/mds-foundations/css/foundations.css';
-import '@maersk-global/mds-design-tokens/maersk/light/css/design-tokens-px.css';
-
-// Import MDS components
-import '@maersk-global/mds-components-core-button';
-import '@maersk-global/mds-components-core-icon';
-import '@maersk-global/mds-components-core-checkbox';
-import '@maersk-global/mds-components-core-card';
-import '@maersk-global/mds-components-core-top-bar';
-
-// Set MDS configuration
-import { MdsConfig } from '@maersk-global/mds-config';
-MdsConfig.iconsDynamicImportPath = import.meta.env.MODE === 'development' ? '/node_modules/' : '/assets/node_modules/';
-
 // Setup MDS components compatibility with WebRTC
 document.addEventListener('DOMContentLoaded', function() {
-  MdsConfig.iconsDynamicImportPath = import.meta.env.MODE === 'development' ? '/node_modules/' : '/assets/node_modules/';
   // Ensure proper icons in buttons
   ensureProperIcons();
   
