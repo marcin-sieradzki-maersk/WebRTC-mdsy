@@ -47,6 +47,8 @@ let c2c_devices = null;         // optional select devices feature, not for all 
 let c2c_remoteVideoDeviceId = undefined; // last associated deviceId
 let c2c_isSelfVideo = false;
 let c2c_callTimer = null;       // interval timer for updating call duration display
+let c2c_actionsSlot = null;     // reference to the actions slot element
+let c2c_actionsParent = null;   // reference to the parent of the actions slot
 
 // HTML element references
 
@@ -147,6 +149,15 @@ async function c2c_startPhone() {
         }
 
         await c2c_devices.enumerate(false);
+        
+        // Set default selection to index 1 for all devices (if available)
+        for (let name of c2c_devices.names) {
+            let device = c2c_devices.getDevice(name);
+            if (device.list.length > 1) {
+                c2c_devices.setSelectedIndex(name, 1);
+                c2c_ac_log(`Set default device selection for ${name} to index 1: "${device.list[1].label}"`);
+            }
+        }
     }
 
     // Optional url parameters: 'call', 'dtmf', 'delay', 'server', 'domain', 'logger', 'token' E.g. ?call=user1&delay=2000&dtmf=1234%23&server=sbc.audiocodes.com
@@ -751,76 +762,76 @@ function c2c_initStack(account) {
         },
 
         callTerminated: function (call, message, cause, redirectTo) {
-            // c2c_ac_log(`phone>>> call terminated callback, cause=${cause}`);
-            // c2c_activeCall = null;
-            // // Stop the call timer
-            // c2c_stopCallTimer();
+            c2c_ac_log(`phone>>> call terminated callback, cause=${cause}`);
+            c2c_activeCall = null;
+            // Stop the call timer
+            c2c_stopCallTimer();
             
-            // if (cause === 'Redirected') {
-            //     c2c_ac_log(`Redirect call to ${redirectTo}`);
-            //     c2c_makeCall(redirectTo, c2c_videoOption());
-            //     return;
-            // }
+            if (cause === 'Redirected') {
+                c2c_ac_log(`Redirect call to ${redirectTo}`);
+                c2c_makeCall(redirectTo, c2c_videoOption());
+                return;
+            }
 
-            // c2c_audioPlayer.stop();
-            // if (c2c_isRegularCall) {
-            //     let terminatedInfo = cause;  // '<span style="font-weight:bold">' + c2c_config.call + '</span> ' + cause;
-            //     c2c_info(terminatedInfo, true);
-            //     if (call.isOutgoing() && !call.wasAccepted()) {
-            //         // Busy tone.
-            //         c2c_audioPlayer.play(c2c_soundConfig.play.busy);
-            //     } else {
-            //         // Disconnect tone.
-            //         c2c_audioPlayer.play(c2c_soundConfig.play.disconnect);
-            //     }
+            c2c_audioPlayer.stop();
+            if (c2c_isRegularCall) {
+                let terminatedInfo = cause;  // '<span style="font-weight:bold">' + c2c_config.call + '</span> ' + cause;
+                c2c_info(terminatedInfo, true);
+                if (call.isOutgoing() && !call.wasAccepted()) {
+                    // Busy tone.
+                    c2c_audioPlayer.play(c2c_soundConfig.play.busy);
+                } else {
+                    // Disconnect tone.
+                    c2c_audioPlayer.play(c2c_soundConfig.play.disconnect);
+                }
 
-            // } else {
-            //     if (!call.wasAccepted()) { // sent or received SIP 2xx response
-            //         c2c_ac_log('Warning: Test call is failed !');
-            //         c2c_info('Test line is failed');
-            //     } else if (c2c_config.testCallSBCScore) {
-            //         // Get BYE X-VoiceQuality header.
-            //         try {
-            //             if (!message)
-            //                 throw 'No BYE message';
-            //             let vq = getXVoiceQuality(message);
-            //             if (vq) {
-            //                 let text = c2c_config.testCallQualityText[vq.color];
-            //                 c2c_ac_log(`BYE: "X-VoiceQuality" header: score="${vq.score}", color="${vq.color}" text="${text}"`);
-            //                 if (c2c_testCallQualityDiv) {
-            //                     c2c_testCallQualityDiv.innerHTML = 'Test call quality: <span style="color:' +
-            //                         vq.color + ';font-weight:bold">' + text + '</span>';
-            //                 }
-            //                 c2c_info('Test passed', true);
-            //             } else {
-            //                 c2c_ac_log('BYE: missing "X-VoiceQuality" header');
-            //                 throw 'BYE: missing "X-VoiceQuality" header';
-            //             }
-            //         } catch (e) {
-            //             c2c_ac_log('Warning: cannot take SBC voice quality information', e)
-            //             c2c_info('Test failed', true);
-            //         }
-            //     }
-            // }
+            } else {
+                if (!call.wasAccepted()) { // sent or received SIP 2xx response
+                    c2c_ac_log('Warning: Test call is failed !');
+                    c2c_info('Test line is failed');
+                } else if (c2c_config.testCallSBCScore) {
+                    // Get BYE X-VoiceQuality header.
+                    try {
+                        if (!message)
+                            throw 'No BYE message';
+                        let vq = getXVoiceQuality(message);
+                        if (vq) {
+                            let text = c2c_config.testCallQualityText[vq.color];
+                            c2c_ac_log(`BYE: "X-VoiceQuality" header: score="${vq.score}", color="${vq.color}" text="${text}"`);
+                            if (c2c_testCallQualityDiv) {
+                                c2c_testCallQualityDiv.innerHTML = 'Test call quality: <span style="color:' +
+                                    vq.color + ';font-weight:bold">' + text + '</span>';
+                            }
+                            c2c_info('Test passed', true);
+                        } else {
+                            c2c_ac_log('BYE: missing "X-VoiceQuality" header');
+                            throw 'BYE: missing "X-VoiceQuality" header';
+                        }
+                    } catch (e) {
+                        c2c_ac_log('Warning: cannot take SBC voice quality information', e)
+                        c2c_info('Test failed', true);
+                    }
+                }
+            }
 
-            // if (c2c_sbcDisconnectDelay === 0) {
-            //     c2c_phone.deinit();
-            // } else {
-            //     c2c_sbcDisconnectTimer = setTimeout(() => {
-            //         c2c_ac_log('The time interval between the end of the call and SBC disconnection is over');
-            //         c2c_phone.deinit();
-            //     }, c2c_sbcDisconnectDelay * 1000);
-            // }
+            if (c2c_sbcDisconnectDelay === 0) {
+                c2c_phone.deinit();
+            } else {
+                c2c_sbcDisconnectTimer = setTimeout(() => {
+                    c2c_ac_log('The time interval between the end of the call and SBC disconnection is over');
+                    c2c_phone.deinit();
+                }, c2c_sbcDisconnectDelay * 1000);
+            }
 
-            // c2c_gui_phoneBeforeCall();
+            c2c_gui_phoneBeforeCall();
 
-            // // Hide black rectangles after video call
-            // c2c_setLocalVideoVisible(false);
-            // c2c_setRemoteVideoVisible(false);
-            // c2c_localVideo.srcObject = null;
-            // c2c_remoteVideo.srcObject = null;
+            // Hide black rectangles after video call
+            c2c_setLocalVideoVisible(false);
+            c2c_setRemoteVideoVisible(false);
+            c2c_localVideo.srcObject = null;
+            c2c_remoteVideo.srcObject = null;
 
-            // c2c_restoreCall = null;
+            c2c_restoreCall = null;
         },
 
         callConfirmed: async function (call, message, cause) {
@@ -1319,6 +1330,9 @@ function c2c_hangupCall() {
     if (c2c_activeCall !== null) {
         c2c_activeCall.terminate();
         c2c_activeCall = null;
+        
+        // Restore UI to before call state
+        c2c_gui_phoneBeforeCall();
     }
 }
 
@@ -1488,16 +1502,6 @@ function c2c_updateHoldButtonState() {
     }
 }
 
-/*
-   Web Designer should customize the code 
-   to define HTML elements representation:
- 
-   1. phone disabled 
-   2. before call
-   3. when calling
-   4. during call   
-   5. call on remote hold    
- */
 function c2c_gui_phoneDisabled(msg) {
     c2c_ac_log(msg);
     c2c_callButton.disabled = true;
@@ -1522,10 +1526,15 @@ function c2c_gui_phoneBeforeCall() {
     c2c_stopCallTimer();
 
     // Remove call-active class to show service details
-    let supportCard = document.querySelector('.support-card');
+    let supportCard = document.querySelector('mc-card');
     if (supportCard) {
         supportCard.classList.remove('call-active');
+        // Restore the heading when call ends
+        supportCard.setAttribute('heading', 'Need assistance with shipping in Croatia?');
     }
+    
+    // Restore actions slot to DOM after call
+    c2c_restoreActionsSlot();
 
     if (c2c_connectionSpeedDiv && navigator.connection) {
         c2c_connectionSpeedDiv.style.display = 'block';
@@ -1644,13 +1653,23 @@ function c2c_gui_DeviceSelection() {
 }
 
 function c2c_gui_phoneCalling() {
-    // Hide optional order form.
-    // document.getElementById('user_order').style.display = 'none';
 
     // Add call-active class to hide service details
-    let supportCard = document.querySelector('.support-card');
+    let supportCard = document.querySelector('mc-card');
     if (supportCard) {
         supportCard.classList.add('call-active');
+        // Hide the heading during call
+        supportCard.setAttribute('heading', '');
+    }
+    
+    // Remove actions slot from DOM during call
+    c2c_removeActionsSlot();
+    
+    // Update call status tag to show connecting
+    let callStatusTag = document.getElementById('call-status-tag');
+    if (callStatusTag) {
+        callStatusTag.textContent = 'Connecting...';
+        callStatusTag.setAttribute('appearance', 'info');
     }
 
     // Hide select devices button
@@ -1723,6 +1742,13 @@ function c2c_gui_phoneOnRemoteHold() {
 
 function c2c_gui_phoneDuringCall() {
     if (c2c_isRegularCall) {
+        // Update call status tag to show in progress
+        let callStatusTag = document.getElementById('call-status-tag');
+        if (callStatusTag) {
+            callStatusTag.textContent = 'In Progress';
+            callStatusTag.setAttribute('appearance', 'success');
+        }
+        
         if (c2c_videoSpan) {
             c2c_videoSpan.style.display = 'none';
         }
@@ -1800,3 +1826,24 @@ function c2c_create_x_header() {
     return 'X-Customer-Information: ' + json; 
 }
 */
+
+// Remove actions slot from DOM during call
+function c2c_removeActionsSlot() {
+    if (!c2c_actionsSlot) {
+        c2c_actionsSlot = document.querySelector('[slot="actions"]');
+        if (c2c_actionsSlot) {
+            c2c_actionsParent = c2c_actionsSlot.parentNode;
+        }
+    }
+    
+    if (c2c_actionsSlot && c2c_actionsParent && c2c_actionsSlot.parentNode) {
+        c2c_actionsSlot.remove();
+    }
+}
+
+// Restore actions slot to DOM after call
+function c2c_restoreActionsSlot() {
+    if (c2c_actionsSlot && c2c_actionsParent && !c2c_actionsSlot.parentNode) {
+        c2c_actionsParent.appendChild(c2c_actionsSlot);
+    }
+}
