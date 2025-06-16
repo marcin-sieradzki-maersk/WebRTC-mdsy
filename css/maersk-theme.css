@@ -1,0 +1,113 @@
+
+
+mc-card {
+  min-width: 550px;
+}
+
+/* Hide service details and actions during call */
+mc-card.call-active .service-details {
+  display: none !important;
+}
+
+.card-container {
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.device-selection-area,
+.device-selection-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.device-selection-area {
+  padding-bottom: 16px;
+}
+
+/* Call in progress styling */
+.call-status {
+  background-color: #f8fffe;
+  border-radius: 12px;
+  margin: 0;
+}
+
+.call-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.call-timer-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 24px;
+  font-weight: 400;
+  color: #111827;
+}
+
+.call-timer {
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.call-contact-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px 0;
+}
+
+.contact-details {
+  flex: 1;
+}
+
+.contact-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.contact-role {
+  font-size: 16px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.call-id {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 16px 0 24px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.call-id::before {
+  content: "#";
+  font-weight: 600;
+}
+
+.call-controls {
+  display: flex;
+  gap: 16px;
+  /* justify-content: flex-end; */
+}
+
+.call-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
