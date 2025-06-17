@@ -148,7 +148,7 @@ async function c2c_startPhone() {
             c2c_devices.load(JSON.parse(selectedDevices));
         }
 
-        await c2c_devices.enumerate(false);
+        await c2c_devices.enumerate(true);
         
         // Set default selection to index 1 for all devices (if available)
         for (let name of c2c_devices.names) {
