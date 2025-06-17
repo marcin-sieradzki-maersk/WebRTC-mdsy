@@ -109,5 +109,11 @@ mc-card.call-active .service-details {
 .call-actions {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+}
+
+.call-actions-bottom {
+  display: flex;
+  flex-direction: column;
+
 }
