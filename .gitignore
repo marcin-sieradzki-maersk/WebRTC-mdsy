@@ -7,4 +7,4 @@ dist
 .env.test.local
 .env.production.local
 
-vanillajs
+CLAUDE.md

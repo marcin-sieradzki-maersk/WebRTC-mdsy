@@ -115,5 +115,97 @@ mc-card.call-active .service-details {
 .call-actions-bottom {
   display: flex;
   flex-direction: column;
+}
 
+/* DTMF Keypad Styling */
+.keypad-panel {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: #f8fffe;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.keypad-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.keypad-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  text-align: center;
+}
+
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 240px;
+  margin: 0 auto;
+}
+
+.keypad-btn {
+  height: 60px;
+  min-width: 60px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+}
+
+.keypad-btn small {
+  font-size: 10px;
+  font-weight: 400;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.keypad-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+#c2c_keypad_input {
+  max-width: 240px;
+  margin: 0 auto;
+}
+
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  /* max-width: 400px; */
+  margin: 0 auto;
+}
+
+.login-btn-full-width {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* Main application initially hidden */
+#main-application {
+  display: none !important;
+}
+
+#main-application.show {
+  display: grid !important;
+  place-items: center;
+}
+
+/* Callback phone number area */
+.callback-phone-area {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
 }

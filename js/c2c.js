@@ -66,12 +66,24 @@ let c2c_selectDevicesButton = null;
 // Keypad. Used if dtmfKeypadEnabled in config.js
 let c2c_keypadButton = null;
 let c2c_keypadDiv = null;
+let c2c_keypadInput = null;
+let c2c_keypadClearButton = null;
 
 // Mute button for audio control during calls
 let c2c_muteButton = null;
 
 // Hold button for call hold/resume during calls
 let c2c_holdButton = null;
+
+// Callback phone number input
+let c2c_callbackPhoneInput = null;
+
+// Login elements
+let c2c_usernameInput = null;
+let c2c_passwordInput = null;
+let c2c_loginButton = null;
+let c2c_loginSection = null;
+let c2c_mainApplication = null;
 
 // Test call button. Used if testCallEnabled in config.js
 let c2c_testButton = null;
@@ -238,6 +250,24 @@ async function c2c_startPhone() {
     
     if (c2c_selectDevicesButton) c2c_selectDevicesButton.onclick = function () { c2c_buttonHandler('select devices button', c2c_selectDevices); }
     if (c2c_keypadButton) c2c_keypadButton.onclick = function () { c2c_buttonHandler('keypad show/hide button', c2c_keypadToggle); }
+    if (c2c_keypadClearButton) c2c_keypadClearButton.onclick = function () { c2c_buttonHandler('keypad clear button', c2c_keypadClear); }
+    if (c2c_loginButton) c2c_loginButton.onclick = function () { c2c_buttonHandler('login button', c2c_handleLogin); }
+    
+    // Add Enter key support for login inputs
+    if (c2c_usernameInput) {
+        c2c_usernameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                c2c_buttonHandler('login button', c2c_handleLogin);
+            }
+        });
+    }
+    if (c2c_passwordInput) {
+        c2c_passwordInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                c2c_buttonHandler('login button', c2c_handleLogin);
+            }
+        });
+    }
     if (c2c_muteButton) c2c_muteButton.onclick = function () { c2c_buttonHandler('mute/unmute button', c2c_muteToggle); }
     if (c2c_holdButton) c2c_holdButton.onclick = function () { c2c_buttonHandler('hold/resume button', c2c_holdToggle); }
     if (c2c_testButton) c2c_testButton.onclick = function () { c2c_buttonHandler('test button', c2c_testButtonHandler); }
@@ -451,6 +481,8 @@ function c2c_getHTMLPageReferences() {
     if (c2c_config.dtmfKeypadEnabled) {
         c2c_keypadButton = document.getElementById('c2c_keypad_btn');
         c2c_keypadDiv = document.getElementById('c2c_keypad_div');
+        c2c_keypadInput = document.getElementById('c2c_keypad_input');
+        c2c_keypadClearButton = document.getElementById('c2c_keypad_clear_btn');
     }
 
     // Get mute button reference
@@ -458,6 +490,16 @@ function c2c_getHTMLPageReferences() {
 
     // Get hold button reference
     c2c_holdButton = document.getElementById('c2c_hold_btn');
+
+    // Get callback phone number input
+    c2c_callbackPhoneInput = document.getElementById('c2c_callback_phone');
+
+    // Get login elements
+    c2c_usernameInput = document.getElementById('c2c_username');
+    c2c_passwordInput = document.getElementById('c2c_password');
+    c2c_loginButton = document.getElementById('c2c_login_btn');
+    c2c_loginSection = document.getElementById('login-section');
+    c2c_mainApplication = document.getElementById('main-application');
 
     // Get HTML elements for testCallEnabled mode
     if (c2c_config.testCallEnabled) {
@@ -1276,7 +1318,18 @@ async function c2c_call(isRegular) {
 
 async function c2c_sbc_connect_sequence() {
     c2c_info('Connecting');
-    c2c_initStack({ user: c2c_config.caller, displayName: c2c_config.callerDN, password: '' });
+    
+    // Get callback phone number if provided, otherwise use default config
+    let callerNumber = c2c_callbackPhoneInput && c2c_callbackPhoneInput.value.trim() 
+                      ? c2c_callbackPhoneInput.value.trim() 
+                      : c2c_config.caller;
+    
+    let callerDisplayName = c2c_callbackPhoneInput && c2c_callbackPhoneInput.value.trim() 
+                           ? c2c_callbackPhoneInput.value.trim() 
+                           : c2c_config.callerDN;
+    
+    c2c_ac_log(`Using caller: ${callerNumber}, display name: ${callerDisplayName}`);
+    c2c_initStack({ user: callerNumber, displayName: callerDisplayName, password: '' });
 }
 
 function c2c_startCall() {
@@ -1429,9 +1482,56 @@ function c2c_keypadToggle() {
 }
 
 function c2c_sendDtmf(key) {
+    // Update the keypad input field
+    if (c2c_keypadInput) {
+        c2c_keypadInput.value += key;
+    }
+    
+    // Send DTMF tone if call is active
     if (c2c_activeCall) {
         c2c_audioPlayer.play(Object.assign({ 'name': key }, c2c_soundConfig.play.dtmf));
         c2c_activeCall.sendDTMF(key);
+    }
+}
+
+function c2c_keypadClear() {
+    if (c2c_keypadInput) {
+        c2c_keypadInput.value = '';
+        c2c_ac_log('Keypad input cleared');
+    }
+}
+
+function c2c_handleLogin() {
+    console.log('Login function called');
+    console.log('Username input element:', c2c_usernameInput);
+    console.log('Password input element:', c2c_passwordInput);
+    console.log('Login section element:', c2c_loginSection);
+    console.log('Main application element:', c2c_mainApplication);
+    
+    let username = c2c_usernameInput ? c2c_usernameInput.value.trim() : '';
+    let password = c2c_passwordInput ? c2c_passwordInput.value.trim() : '';
+    
+    console.log('Username:', username);
+    console.log('Password:', password ? '[password entered]' : '[no password]');
+    
+    // Accept any credentials (fake login)
+    if (username && password) {
+        c2c_ac_log(`Login successful for user: ${username}`);
+        console.log('Login successful, hiding login section and showing main app');
+        
+        // Hide login section and show main application
+        if (c2c_loginSection) {
+            c2c_loginSection.style.display = 'none';
+            console.log('Login section hidden');
+        }
+        if (c2c_mainApplication) {
+            c2c_mainApplication.classList.add('show');
+            console.log('Main application shown');
+        }
+    } else {
+        c2c_ac_log('Login failed: Username and password are required');
+        console.log('Login failed - missing credentials');
+        alert('Please enter both username and password');
     }
 }
 
@@ -1526,7 +1626,7 @@ function c2c_gui_phoneBeforeCall() {
     c2c_stopCallTimer();
 
     // Remove call-active class to show service details
-    let supportCard = document.querySelector('mc-card');
+    let supportCard = document.querySelector('mc-card#support-card');
     if (supportCard) {
         supportCard.classList.remove('call-active');
         // Restore the heading when call ends
@@ -1655,7 +1755,7 @@ function c2c_gui_DeviceSelection() {
 function c2c_gui_phoneCalling() {
 
     // Add call-active class to hide service details
-    let supportCard = document.querySelector('mc-card');
+    let supportCard = document.querySelector('mc-card#support-card');
     if (supportCard) {
         supportCard.classList.add('call-active');
         // Hide the heading during call

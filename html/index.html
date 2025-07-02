@@ -51,8 +51,42 @@
     <div class="mds-layout mds-layout-no-side-bar">
       <mc-top-bar product="Maersk" productshort="Maersk" href="/html/index.html"></mc-top-bar>
       <main id="main-content" class="mds-page mds-container">
-        <div class="card-container">
-          <mc-card heading="Need assistance with shipping in Croatia?">
+        <!-- Login Section -->
+        <div id="login-section" class="card-container">
+          <mc-card heading="Please login to connect with support">
+            <div class="card-content">
+              <div class="login-container">
+                <div class="login-form">
+                  <mc-input
+                    id="c2c_username"
+                    label="Username"
+                    placeholder="Enter your username"
+                    value=""
+                  ></mc-input>
+                  <mc-input
+                    id="c2c_password"
+                    label="Password"
+                    placeholder="Enter your password"
+                    type="password"
+                    value=""
+                  ></mc-input>
+                  <mc-button
+                    id="c2c_login_btn"
+                    appearance="primary"
+                    class="login-btn-full-width"
+                    width="full-width"
+                  >
+                    Login
+                  </mc-button>
+                </div>
+              </div>
+            </div>
+          </mc-card>
+        </div>
+
+        <!-- Main Application (hidden until login) -->
+        <div id="main-application" class="card-container" style="display: none;">
+          <mc-card heading="Need assistance with shipping in Croatia?" id="support-card">
             <div class="card-content">
               <div class="service-details">
                 <p class="mds-neutral--weak__text-color">
@@ -60,6 +94,7 @@
                   needs.
                 </p>
               </div>
+              
               <!-- Call status section (visible during call) -->
               <div
                 id="call-in-progress"
@@ -108,6 +143,15 @@
                     Hold
                   </mc-button>
                   <mc-button
+                    appearance="neutral"
+                    id="c2c_keypad_btn"
+                    icon="dot-grid"
+                    title="Show/Hide Keypad"
+                    style="display: none;"
+                  >
+                    Keypad
+                  </mc-button>
+                  <mc-button
                     appearance="error"
                     id="c2c_call_btn"
                     icon="phone"
@@ -116,10 +160,57 @@
                     Disconnect
                   </mc-button>
                 </div>
+
+                <!-- DTMF Keypad Panel -->
+                <div id="c2c_keypad_div" class="keypad-panel" style="display: none;">
+                  <div class="keypad-container">
+                    <mc-input
+                      id="c2c_keypad_input"
+                      label="DTMF Sequence"
+                      hiddenlabel
+                      value=""
+                    ></mc-input>
+                    <div id="c2c_keypad_grid" class="keypad-grid">
+                      <mc-button class="keypad-btn" data-key="1" appearance="neutral">1</mc-button>
+                      <mc-button class="keypad-btn" data-key="2" appearance="neutral">2</mc-button>
+                      <mc-button class="keypad-btn" data-key="3" appearance="neutral">3</mc-button>
+                      <mc-button class="keypad-btn" data-key="4" appearance="neutral">4</mc-button>
+                      <mc-button class="keypad-btn" data-key="5" appearance="neutral">5</mc-button>
+                      <mc-button class="keypad-btn" data-key="6" appearance="neutral">6</mc-button>
+                      <mc-button class="keypad-btn" data-key="7" appearance="neutral">7</mc-button>
+                      <mc-button class="keypad-btn" data-key="8" appearance="neutral">8</mc-button>
+                      <mc-button class="keypad-btn" data-key="9" appearance="neutral">9</mc-button>
+                      <mc-button class="keypad-btn" data-key="*" appearance="neutral">*</mc-button>
+                      <mc-button class="keypad-btn" data-key="0" appearance="neutral">0</mc-button>
+                      <mc-button class="keypad-btn" data-key="#" appearance="neutral">#</mc-button>
+                    </div>
+                    <div class="keypad-actions">
+                      <mc-button
+                        id="c2c_keypad_clear_btn"
+                        appearance="neutral"
+                        icon="times"
+                        title="Clear input"
+                      >
+                        Clear
+                      </mc-button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <!-- Pre-call section (visible before call) -->
+              <!-- Pre-call section (visible after login) -->
               <div id="pre-call-section">
+                <!-- Callback Phone Number -->
+                <div class="callback-phone-area">
+                  <mc-input
+                    id="c2c_callback_phone"
+                    label="Please enter a phone number we can call you back on if needed"
+                    placeholder="+1234567890"
+                    type="tel"
+                    value=""
+                  ></mc-input>
+                </div>
+                
                 <!-- Device Selection Area -->
                 <div class="device-selection-area">
                   <h4 class="device-selection-title">Select your devices</h4>
@@ -259,6 +350,8 @@
                 autoplay
                 playsinline
               ></video>
+              
+              </div> <!-- End main-application -->
             </div>
           </mc-card>
         </div>
