@@ -49,11 +49,47 @@
 
   <body class="mds">
     <div class="mds-layout mds-layout-no-side-bar">
-      <mc-top-bar product="Maersk" productshort="Maersk" href="/html/index.html"></mc-top-bar>
-      <main id="main-content" class="mds-page mds-container">
+      <mc-top-bar product="Maersk" productshort="Maersk" href="/html/index.html">
+        <mc-avatar
+        slot="actions"
+          info="info"
+          initials="JD"
+          hiddentooltip
+          fit="small"
+          appearance="color-3"
+          slot="trailing">
+        </mc-avatar>
+      </mc-top-bar>
+
+      <main id="main-content" class="mds-page">
+        <!-- Hero Section -->
+        <section class="hero-section">
+          <div class="hero-content">
+            <h1 class="hero-title">The Maersk East-West Network</h1>
+            <p class="hero-subtitle">Setting a new standard for reliability and service quality.</p>
+            <div class="hero-buttons">
+              <mc-button appearance="primary">Cape of Good Hope</mc-button>
+              <mc-button appearance="inverse" variant="outlined">Route Search</mc-button>
+            </div>
+            <div class="hero-tags">
+              <div class="hero-tag">
+                <mc-icon icon="check-circle"></mc-icon>
+                <span>High reliability</span>
+              </div>
+              <div class="hero-tag">
+                <mc-icon icon="globe"></mc-icon>
+                <span>Global coverage</span>
+              </div>
+              <div class="hero-tag">
+                <mc-icon icon="clock"></mc-icon>
+                <span>Faster response</span>
+              </div>
+            </div>
+          </div>
+        </section>
         <!-- Login Section -->
         <div id="login-section" class="card-container">
-          <mc-card heading="Please login to connect with support">
+          <mc-card heading="Please login to connect with support" class="login-card">
             <div class="card-content">
               <div class="login-container">
                 <div class="login-form">
@@ -85,15 +121,69 @@
         </div>
 
         <!-- Main Application (hidden until login) -->
-        <div id="main-application" class="card-container" style="display: none;">
-          <mc-card heading="Need assistance with shipping in Croatia?" id="support-card">
-            <div class="card-content">
-              <div class="service-details">
-                <p class="mds-neutral--weak__text-color">
-                  Our local specialists are ready to help with your logistics
-                  needs.
-                </p>
+        <div id="main-application" class="main-layout" style="display: none;">
+          <!-- Local Information Card -->
+          <div class="local-info-card">
+            <mc-card heading="Local information">
+              <div class="local-info-content">
+                <div class="location-item">
+                  <mc-icon icon="office-1" class="location-icon"></mc-icon>
+                  <div class="location-details">
+                    <div class="location-type">Main office</div>
+                    <div class="location-name">Rijeka</div>
+                  </div>
+                  <mc-icon icon="chevron-right" class="location-chevron"></mc-icon>
+                </div>
+                
+                <div class="location-item">
+                  <mc-icon icon="anchor" class="location-icon"></mc-icon>
+                  <div class="location-details">
+                    <div class="location-type">Port</div>
+                    <div class="location-name">AGCT</div>
+                  </div>
+                  <mc-icon icon="chevron-right" class="location-chevron"></mc-icon>
+                </div>
+                
+                <div class="location-item">
+                  <mc-icon icon="anchor" class="location-icon"></mc-icon>
+                  <div class="location-details">
+                    <div class="location-type">Port</div>
+                    <div class="location-name">Ploce</div>
+                  </div>
+                  <mc-icon icon="chevron-right" class="location-chevron"></mc-icon>
+                </div>
+                
+                <div class="location-item">
+                  <mc-icon icon="anchor" class="location-icon"></mc-icon>
+                  <div class="location-details">
+                    <div class="location-type">Port</div>
+                    <div class="location-name">Rijeka</div>
+                  </div>
+                  <mc-icon icon="chevron-right" class="location-chevron"></mc-icon>
+                </div>
+                
+                <div class="location-item">
+                  <mc-icon icon="anchor" class="location-icon"></mc-icon>
+                  <div class="location-details">
+                    <div class="location-type">Port</div>
+                    <div class="location-name">Split</div>
+                  </div>
+                  <mc-icon icon="chevron-right" class="location-chevron"></mc-icon>
+                </div>
               </div>
+            </mc-card>
+          </div>
+
+          <!-- Support Card -->
+          <div class="support-card">
+            <mc-card heading="Need assistance with shipping in Croatia?" id="support-card">
+              <div class="card-content">
+                <div class="service-details">
+                  <p class="mds-neutral--weak__text-color">
+                    Our local specialists are ready to help with your logistics
+                    needs.
+                  </p>
+                </div>
               
               <!-- Call status section (visible during call) -->
               <div
@@ -337,6 +427,7 @@
                 >
               </div>
             </div>
+
             <div id="c2c_video_div">
               <video
                 id="c2c_local_video"
@@ -350,11 +441,10 @@
                 autoplay
                 playsinline
               ></video>
-              
-              </div> <!-- End main-application -->
             </div>
-          </mc-card>
-        </div>
+            </mc-card>
+          </div>
+        </div> <!-- End main-application -->
       </main>
     </div>
   </body>
