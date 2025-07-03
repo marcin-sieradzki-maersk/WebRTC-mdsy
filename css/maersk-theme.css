@@ -1,7 +1,269 @@
 
+/* Hero Section Styles */
+.hero-section {
+  background-image: url('../public/assets/images/background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 30vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: white;
+}
 
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 51, 102, 0.7) 0%, rgba(0, 102, 153, 0.5) 100%);
+  z-index: 1;
+}
+
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+  text-align: left;
+}
+
+.hero-title {
+  font-size: 48px;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  color: white;
+}
+
+.hero-subtitle {
+  font-size: 20px;
+  font-weight: 400;
+  margin: 0 0 24px 0;
+  padding: 16px 0 !important;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.hero-tags {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.hero-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: white;
+}
+
+.hero-tag mc-icon::part(icon-wrapper) {
+  fill: white;
+}
+
+/* Main Layout Styles */
+.main-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 32px;
+}
+
+.local-info-card mc-card,
+.support-card mc-card {
+  min-width: unset;
+  height: 100%;
+}
+
+.local-info-card mc-card {
+  max-height: 563px;
+}
+
+/* Local Information Styles */
+.local-info-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.location-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  border-radius: 8px;
+  margin: 0 -12px;
+  transition: background-color 0.2s ease;
+}
+
+.location-item:last-child {
+  border-bottom: none;
+}
+
+.location-item:hover {
+  background-color: #f8f9fa;
+}
+
+.location-icon {
+  color: #0066cc;
+  font-size: 24px;
+  transform: scale(2);
+}
+
+.location-details {
+  flex: 1;
+}
+
+.location-type {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 4px;
+  font-weight: 400;
+}
+
+.location-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.location-chevron {
+  color: #999;
+  font-size: 16px;
+  margin-left: auto;
+}
+
+/* Card Styling */
 mc-card {
+  min-width: unset;
+  width: 100%;
+}
+
+.card-container mc-card {
   min-width: 550px;
+}
+
+.login-card {
+  max-width: 550px;
+}
+
+/* Support card specific styling */
+.support-card .card-content {
+  padding-bottom: 0;
+}
+
+.support-card .device-selection-area {
+  /* padding: 20px;
+  border-radius: 8px; */
+  margin-top: 16px;
+}
+
+/* .support-card .device-selection-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  margin: 0 0 16px 0;
+  text-transform: none;
+} */
+
+@media (max-width: 1024px) {
+  .main-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 32px 16px;
+  }
+  
+  .hero-section {
+    height: 30vh;
+    min-height: 250px;
+  }
+  
+  .hero-title {
+    font-size: 36px;
+  }
+  
+  .hero-subtitle {
+    font-size: 18px;
+  }
+  
+  .hero-tags {
+    gap: 24px;
+  }
+  
+  .hero-content {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-section {
+    height: 30vh;
+    min-height: 200px;
+  }
+  
+  .hero-title {
+    font-size: 28px;
+  }
+  
+  .hero-subtitle {
+    font-size: 16px;
+  }
+  
+  .hero-tags {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .hero-tag {
+    font-size: 14px;
+  }
+  
+  .card-container mc-card {
+    min-width: unset;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    height: 30vh;
+    min-height: 180px;
+  }
+  
+  .hero-title {
+    font-size: 24px;
+  }
+  
+  .hero-subtitle {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+  
+  .hero-tags {
+    gap: 8px;
+  }
+  
+  .hero-tag {
+    font-size: 12px;
+  }
 }
 
 /* Hide service details and actions during call */
@@ -193,19 +455,51 @@ mc-card.call-active .service-details {
   margin-top: 8px;
 }
 
-/* Main application initially hidden */
+/* Login section visible by default and centered */
+#login-section {
+  display: grid !important;
+  place-items: center;
+  min-height: 70vh;
+}
+
+/* Hide hero section when login is showing */
+body:has(#login-section:not([style*="display: none"])) .hero-section {
+  display: none !important;
+}
+
+/* Main application hidden by default */
 #main-application {
   display: none !important;
 }
 
 #main-application.show {
   display: grid !important;
-  place-items: center;
+}
+
+/* Hide login section when main application is shown */
+#main-application.show ~ #login-section,
+body:has(#main-application.show) #login-section {
+  display: none !important;
+}
+
+/* Hide avatar before login */
+mc-top-bar mc-avatar {
+  display: none !important;
+}
+
+/* Show avatar after login */
+body:has(#main-application.show) mc-top-bar mc-avatar {
+  display: block !important;
+}
+
+/* Show hero section when main application is shown */
+#main-application.show ~ * .hero-section,
+body:has(#main-application.show) .hero-section {
+  display: flex !important;
 }
 
 /* Callback phone number area */
 .callback-phone-area {
-  margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid #e5e7eb;
 }
