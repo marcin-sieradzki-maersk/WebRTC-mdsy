@@ -19,11 +19,5 @@
     "rollup-plugin-copy": "^3.5.0"
   },
   "dependencies": {
-    "@maersk-global/fonts": "^1.6.0",
-    "@maersk-global/icons": "^1.23.0",
-    "@maersk-global/mds-components-core": "^2.113.4",
-    "@maersk-global/mds-config": "^2.113.4",
-    "@maersk-global/mds-design-tokens": "^2.113.4",
-    "@maersk-global/mds-foundations": "^2.113.4"
   }
 }
