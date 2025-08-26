@@ -1,200 +1,451 @@
 <!DOCTYPE html>
-<!--
-    Click to call widget usage example
--->
-<html>
-
-<head>
-    <title>click-to-call example</title>
+<html lang="en">
+  <head>
+    <title>Contact Support - Maersk</title>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" href="/assets/favicon-qBNC9m_X.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/assets/favicon-qBNC9m_X.png" />
 
-    <!-- 
-        It's optional. Can be used to prevent cross origin vulnerability 
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self';">
-    -->
-    <script defer src="../conf/config.js"></script>
-    <script defer src="../js/ac_webrtc.min.js"></script>
-    <script defer src="../js/c2c_utils.js"></script>
-    <script defer src="../js/c2c.js"></script>
+    <!-- MDS Styles from CDN -->
+    <link
+      rel="stylesheet"
+      href="https://assets.maerskline.com/mds/fonts/fonts-cdn.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://assets.maerskline.com/mds/latest/design-tokens/maersk/light/css/design-tokens-px.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://assets.maerskline.com/mds/latest/foundations/foundations.min.css"
+    />
+
+    <!-- MDS Components from CDN -->
+    <script
+      type="module"
+      src="https://assets.maerskline.com/mds/latest/components-core/index.bundle.esm.min.js"
+    ></script>
+
+
+    
+    <!-- AudioCodes WebRTC scripts -->
+    <script src="../conf/config.js"></script>
+    <script src="../js/ac_webrtc.min.js"></script>
+    <script src="../js/c2c_utils.js"></script>
+    <script src="../js/c2c.js"></script>
+    <script src="../src/main.js"></script>
+    <!-- Include adapter for backwards compatibility with older browsers -->
+    <script
+      defer
+      src="https://webrtc.github.io/adapter/adapter-latest.js"
+    ></script>
 
     <!-- optional part, used only if set testCallSBCScore: false (browser voice quality test) 
         <script defer src="../js/voice_quality.js"></script>
      -->
-  <script type="module" crossorigin src="/assets/main-E1cKTHqG.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/main-inj11HEP.css">
-  <link rel="stylesheet" crossorigin href="/assets/app-Co8-20_B.css">
-</head>
+    <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/app-Cb8dI_kE.css">
+  </head>
 
-<body>
-    <img src="/assets/logo-audio-codes-m5Dblayy.svg" alt="AudioCodes" width="450" height="70">
-    <div id="main_div">
-        <h2>Click To Call Example</h2>
-        <p>This page shows the AudioCodes click To call.</p>
-        <p>This site is for Demo purpose only.</p>
+  <body class="mds">
+    <div class="mds-layout mds-layout-no-side-bar">
+      <mc-top-bar product="Maersk" productshort="Maersk" href="/html/index.html">
+        <mc-avatar
+        slot="actions"
+          info="info"
+          initials="JD"
+          hiddentooltip
+          fit="small"
+          appearance="color-3"
+          slot="trailing">
+        </mc-avatar>
+      </mc-top-bar>
 
-        <!-- Optional connection speed. Used if defined in HTML and testCallEnabled in config.js -->
-        <div id="c2c_connection_speed_div"></div>
+      <main id="main-content" class="mds-page">
+        <!-- Hero Section -->
+        <section class="hero-section">
+          <div class="hero-content">
+            <h1 class="hero-title">The Maersk East-West Network</h1>
+            <p class="hero-subtitle">Setting a new standard for reliability and service quality.</p>
+            <div class="hero-buttons">
+              <mc-button appearance="primary">Cape of Good Hope</mc-button>
+              <mc-button appearance="inverse" variant="outlined">Route Search</mc-button>
+            </div>
+            <div class="hero-tags">
+              <div class="hero-tag">
+                <mc-icon icon="check-circle"></mc-icon>
+                <span>High reliability</span>
+              </div>
+              <div class="hero-tag">
+                <mc-icon icon="globe"></mc-icon>
+                <span>Global coverage</span>
+              </div>
+              <div class="hero-tag">
+                <mc-icon icon="clock"></mc-icon>
+                <span>Faster response</span>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- Login Section -->
+        <div id="login-section" class="card-container">
+          <mc-card heading="Please login to connect with support" class="login-card">
+            <div class="card-content">
+              <div class="login-container">
+                <div class="login-form">
+                  <mc-input
+                    id="c2c_username"
+                    label="Username"
+                    placeholder="Enter your username"
+                    value=""
+                  ></mc-input>
+                  <mc-input
+                    id="c2c_password"
+                    label="Password"
+                    placeholder="Enter your password"
+                    type="password"
+                    value=""
+                  ></mc-input>
+                  <mc-button
+                    id="c2c_login_btn"
+                    appearance="primary"
+                    class="login-btn-full-width"
+                    width="full-width"
+                  >
+                    Login
+                  </mc-button>
+                </div>
+              </div>
+            </div>
+          </mc-card>
+        </div>
 
-        <!-- Optional test call quality. Used only if testCallEnabled in config.js -->
-        <div id="c2c_test_call_quality_div"></div>
+        <!-- Main Application (hidden until login) -->
+        <div id="main-application" class="main-layout" style="display: none;">
+          <!-- Local Information Card -->
+          <div class="local-info-card">
+            <mc-card heading="Local information">
+              <div class="local-info-content">
+                <div class="location-item">
+                  <mc-icon icon="office-1" class="location-icon"></mc-icon>
+                  <div class="location-details">
+                    <div class="location-type">Main office</div>
+                    <div class="location-name">Rijeka</div>
+                  </div>
+                  <mc-icon icon="chevron-right" class="location-chevron"></mc-icon>
+                </div>
+                
+                <div class="location-item">
+                  <mc-icon icon="anchor" class="location-icon"></mc-icon>
+                  <div class="location-details">
+                    <div class="location-type">Port</div>
+                    <div class="location-name">AGCT</div>
+                  </div>
+                  <mc-icon icon="chevron-right" class="location-chevron"></mc-icon>
+                </div>
+                
+                <div class="location-item">
+                  <mc-icon icon="anchor" class="location-icon"></mc-icon>
+                  <div class="location-details">
+                    <div class="location-type">Port</div>
+                    <div class="location-name">Ploce</div>
+                  </div>
+                  <mc-icon icon="chevron-right" class="location-chevron"></mc-icon>
+                </div>
+                
+                <div class="location-item">
+                  <mc-icon icon="anchor" class="location-icon"></mc-icon>
+                  <div class="location-details">
+                    <div class="location-type">Port</div>
+                    <div class="location-name">Rijeka</div>
+                  </div>
+                  <mc-icon icon="chevron-right" class="location-chevron"></mc-icon>
+                </div>
+                
+                <div class="location-item">
+                  <mc-icon icon="anchor" class="location-icon"></mc-icon>
+                  <div class="location-details">
+                    <div class="location-type">Port</div>
+                    <div class="location-name">Split</div>
+                  </div>
+                  <mc-icon icon="chevron-right" class="location-chevron"></mc-icon>
+                </div>
+              </div>
+            </mc-card>
+          </div>
 
-        <!-- 
-		    Example of optional arbitrary form that user can fill before call. 
-            Please define custom function c2c_create_x_header (see c2c.js)
-            The function read the form data and create JSON that will be 
-            attached to outgoing call INVITE as SIP X-Header
-        
-        <form id="user_order"">
-            <label for="customer_name">Customer name:</label><br>
-            <input type="text" id="customer_name" placeholder="first name" value=""><br>
+          <!-- Support Card -->
+          <div class="support-card">
+            <mc-card heading="Need assistance with shipping in Croatia?" id="support-card">
+              <div class="card-content">
+                <div class="service-details">
+                  <p class="mds-neutral--weak__text-color">
+                    Our local specialists are ready to help with your logistics
+                    needs.
+                  </p>
+                </div>
+              
+              <!-- Call status section (visible during call) -->
+              <div
+                id="call-in-progress"
+                class="call-status"
+                style="display: none"
+              >
+                <div class="call-status-header">
+                  <mc-tag appearance="success" id="call-status-tag"
+                    >In Progress</mc-tag
+                  >
+                  <div class="call-timer-section">
+                    <mc-icon icon="clock"></mc-icon>
+                    <span id="call-timer" class="call-timer">00:00</span>
+                  </div>
+                </div>
 
-            <label for="mobile">Mobile:</label><br>
-            <input type="text" id="customer_mobile" placeholder="phone number" value=""><br>
+                <div class="call-contact-section">
+                  <mc-avatar
+                    info="SJ"
+                    hiddentooltip
+                    appearance="color-1"
+                  ></mc-avatar>
+                  <div class="contact-details">
+                    <h3 class="contact-name">Maersk Croatia CX Mainline</h3>
+                    <p class="contact-role">Support Agent</p>
+                  </div>
+                </div>
 
-            <label for="address">Address:</label><br>
-            <input type="text" id="customer_address" placeholder="address" value=""><br>
-        </form>
-        -->
+                <div class="call-id">Call ID: CALL-2024-001</div>
 
-        <!-- click to call widget (call buttons and audio/video selection) -->
-        <div id="c2c_widget_div">
+                <div class="call-controls">
+                  <mc-button
+                    appearance="neutral"
+                    id="c2c_mute_btn"
+                    icon="microphone"
+                    title="Mute/Unmute Microphone"
+                  >
+                    Mute
+                  </mc-button>
+                  <mc-button
+                    appearance="neutral"
+                    id="c2c_hold_btn"
+                    icon="pause"
+                    title="Hold/Resume Call"
+                  >
+                    Hold
+                  </mc-button>
+                  <mc-button
+                    appearance="neutral"
+                    id="c2c_keypad_btn"
+                    icon="dot-grid"
+                    title="Show/Hide Keypad"
+                    style="display: none;"
+                  >
+                    Keypad
+                  </mc-button>
+                  <mc-button
+                    appearance="error"
+                    id="c2c_call_btn"
+                    icon="phone"
+                    title="Disconnect"
+                  >
+                    Disconnect
+                  </mc-button>
+                </div>
 
-            <!-- Optional select devices button  -->
+                <!-- DTMF Keypad Panel -->
+                <div id="c2c_keypad_div" class="keypad-panel" style="display: none;">
+                  <div class="keypad-container">
+                    <mc-input
+                      id="c2c_keypad_input"
+                      label="DTMF Sequence"
+                      hiddenlabel
+                      value=""
+                    ></mc-input>
+                    <div id="c2c_keypad_grid" class="keypad-grid">
+                      <mc-button class="keypad-btn" data-key="1" appearance="neutral">1</mc-button>
+                      <mc-button class="keypad-btn" data-key="2" appearance="neutral">2</mc-button>
+                      <mc-button class="keypad-btn" data-key="3" appearance="neutral">3</mc-button>
+                      <mc-button class="keypad-btn" data-key="4" appearance="neutral">4</mc-button>
+                      <mc-button class="keypad-btn" data-key="5" appearance="neutral">5</mc-button>
+                      <mc-button class="keypad-btn" data-key="6" appearance="neutral">6</mc-button>
+                      <mc-button class="keypad-btn" data-key="7" appearance="neutral">7</mc-button>
+                      <mc-button class="keypad-btn" data-key="8" appearance="neutral">8</mc-button>
+                      <mc-button class="keypad-btn" data-key="9" appearance="neutral">9</mc-button>
+                      <mc-button class="keypad-btn" data-key="*" appearance="neutral">*</mc-button>
+                      <mc-button class="keypad-btn" data-key="0" appearance="neutral">0</mc-button>
+                      <mc-button class="keypad-btn" data-key="#" appearance="neutral">#</mc-button>
+                    </div>
+                    <div class="keypad-actions">
+                      <mc-button
+                        id="c2c_keypad_clear_btn"
+                        appearance="neutral"
+                        icon="times"
+                        title="Clear input"
+                      >
+                        Clear
+                      </mc-button>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-            <button id="c2c_select_devices_btn" title="Click to select devices (microphone, camera, speaker)">
-            <!-- Used free SVG gear icon. Thanks to www.iconfinder.com -->
-            <svg id="c2c_select_devices_svg" viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M424.5,216.5h-15.2c-12.4,0-22.8-10.7-22.8-23.4c0-6.4,2.7-12.2,7.5-16.5l9.8-9.6c9.7-9.6,9.7-25.3,0-34.9l-22.3-22.1  c-4.4-4.4-10.9-7-17.5-7c-6.6,0-13,2.6-17.5,7l-9.4,9.4c-4.5,5-10.5,7.7-17,7.7c-12.8,0-23.5-10.4-23.5-22.7V89.1  c0-13.5-10.9-25.1-24.5-25.1h-30.4c-13.6,0-24.4,11.5-24.4,25.1v15.2c0,12.3-10.7,22.7-23.5,22.7c-6.4,0-12.3-2.7-16.6-7.4l-9.7-9.6  c-4.4-4.5-10.9-7-17.5-7s-13,2.6-17.5,7L110,132c-9.6,9.6-9.6,25.3,0,34.8l9.4,9.4c5,4.5,7.8,10.5,7.8,16.9  c0,12.8-10.4,23.4-22.8,23.4H89.2c-13.7,0-25.2,10.7-25.2,24.3V256v15.2c0,13.5,11.5,24.3,25.2,24.3h15.2  c12.4,0,22.8,10.7,22.8,23.4c0,6.4-2.8,12.4-7.8,16.9l-9.4,9.3c-9.6,9.6-9.6,25.3,0,34.8l22.3,22.2c4.4,4.5,10.9,7,17.5,7  c6.6,0,13-2.6,17.5-7l9.7-9.6c4.2-4.7,10.2-7.4,16.6-7.4c12.8,0,23.5,10.4,23.5,22.7v15.2c0,13.5,10.8,25.1,24.5,25.1h30.4  c13.6,0,24.4-11.5,24.4-25.1v-15.2c0-12.3,10.7-22.7,23.5-22.7c6.4,0,12.4,2.8,17,7.7l9.4,9.4c4.5,4.4,10.9,7,17.5,7  c6.6,0,13-2.6,17.5-7l22.3-22.2c9.6-9.6,9.6-25.3,0-34.9l-9.8-9.6c-4.8-4.3-7.5-10.2-7.5-16.5c0-12.8,10.4-23.4,22.8-23.4h15.2  c13.6,0,23.3-10.7,23.3-24.3V256v-15.2C447.8,227.2,438.1,216.5,424.5,216.5z M336.8,256L336.8,256c0,44.1-35.7,80-80,80  c-44.3,0-80-35.9-80-80l0,0l0,0c0-44.1,35.7-80,80-80C301.1,176,336.8,211.9,336.8,256L336.8,256z"/></svg>
-            <span>Devices</span>
-            </button>
-			
-            <!-- Optional open/close keypad button. To send DTMF during call -->			
-            <button id="c2c_keypad_btn" title="Click to open/close keypad">
-                <svg id="c2c_keypad_svg" viewBox="0 0 512 512" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M120,100h70v70h-70zm90,0h70v70h-70zm90,0h70v70h-70zM120,190h70v70h-70zm90,0h70v70h-70zm90,0h70v70h-70zM120,280h70v70h-70zm90,0h70v70h-70zm90,0h70v70h-70zM120,370h70v70h-70zm90,0h70v70h-70zm90,0h70v70h-70z" fill="#1D1D1D"/></svg>
-                <span>Keypad</span>
-            </button>
+              <!-- Pre-call section (visible after login) -->
+              <div id="pre-call-section">
+                <!-- Callback Phone Number -->
+                <div class="callback-phone-area">
+                  <mc-input
+                    id="c2c_callback_phone"
+                    label="Please enter a phone number we can call you back on if needed"
+                    placeholder="+1234567890"
+                    type="tel"
+                    value=""
+                  ></mc-input>
+                </div>
+                
+                <!-- Device Selection Area -->
+                <div class="device-selection-area">
+                  <h4 class="device-selection-title">Select your devices</h4>
+                  <div class="device-selection-form">
+                    <div id="microphone_dev" class="device-select-group">
+                      <mc-select
+                        value="1"
+                        label="Microphone"
+                        placeholder="Select microphone"
+                        name="microphone"
+                      >
+                      </mc-select>
+                    </div>
+                    <div id="speaker_dev" class="device-select-group">
+                      <mc-select
+                        value="1"
+                        label="Speaker"
+                        placeholder="Select speaker"
+                        name="speaker"
+                      >
+                      </mc-select>
+                    </div>
+                  </div>
+                </div>
+                <div id="c2c_status_line" style="display: none"></div>
+                <!-- WebRTC widget -->
+                <div id="c2c_widget_div">
+                  <!-- Optional actions -->
+                  <div style="display: none">
+                    <mc-button
+                      id="c2c_test_btn"
+                      icon="phone"
+                      appearance="neutral"
+                      variant="outlined"
+                      title="Click to test connection quality"
+                    >
+                      Test line
+                    </mc-button>
+                  </div>
 
+                  <!-- Video controls -->
+                  <div>
+                    <span id="c2c_video_chk_span" style="display: none">
+                      <mc-checkbox
+                        id="c2c_video_chk"
+                        label="Enable video call"
+                      ></mc-checkbox>
+                    </span>
 
-            <!-- Test call button (to check Phone-SBC line quality) -->
-            <button id="c2c_test_btn" title="Click to test connection quality">
-                <svg id="c2c_test_svg" viewBox="0 0 24 24">
-                    <!-- Used free SVG phone icon. Thanks to www.freeicons.io -->
-                    <g fill="none" fill-rule="evenodd">
-                        <path d="M-1-1h24v24H-1z" />
-                        <path
-                            d="M21.61 17.99l-9.08-9.08c.93-2.34.45-5.1-1.44-7-2.3-2.3-5.88-2.51-8.43-.65L6.5 5.11 5.08 6.52 1.25 2.69C-.61 5.23-.4 8.82 1.9 11.11c1.86 1.86 4.57 2.35 6.89 1.48l9.11 9.11c.39.39 1.02.39 1.41 0l2.3-2.3c.4-.38.4-1.01 0-1.41zm-3 1.6l-9.46-9.46c-.61.45-1.29.72-2 .82-1.36.2-2.79-.21-3.83-1.25C2.37 8.76 1.93 7.5 2 6.26l3.09 3.09 4.24-4.24-3.09-3.09c1.24-.07 2.49.37 3.44 1.31a4.469 4.469 0 011.24 3.96 4.35 4.35 0 01-.88 1.96l9.45 9.45-.88.89z"
-                            fill="#1D1D1D" />
-                    </g>
-                </svg>
-                <span>Test line</span>
-            </button>
+                    <span id="c2c_self_video_chk_span" style="display: none">
+                      <mc-checkbox
+                        id="c2c_self_video_chk"
+                        label="Show my video"
+                      ></mc-checkbox>
+                    </span>
+                  </div>
+                </div>
 
-            &nbsp;
+                <!-- Hidden call settings and quality div -->
+                <div style="display: none">
+                  <!-- Audio Settings button -->
+                  <mc-button
+                    class="audio-settings-btn"
+                    id="c2c_select_devices_btn"
+                    title="Click to select devices"
+                    icon="cog"
+                    appearance="neutral"
+                  >
+                    Audio Settings
+                  </mc-button>
 
-            <!-- Call button -->
-            <button id="c2c_call_btn" title="Click to call us on the phone">
-                <!-- Used free SVG phone icon. Thanks to fontawesome.com -->
-                <svg id="c2c_call_svg" fill="#006DF0" viewBox="0 0 512 512">
-                    <path
-                        d="M493.4 24.6l-104-24c-11.3-2.6-22.9 3.3-27.5 13.9l-48 112c-4.2 9.8-1.4 21.3 6.9 28l60.6 49.6c-36 76.7-98.9 140.5-177.2 177.2l-49.6-60.6c-6.8-8.3-18.2-11.1-28-6.9l-112 48C3.9 366.5-2 378.1.6 389.4l24 104C27.1 504.2 36.7 512 48 512c256.1 0 464-207.5 464-464 0-11.2-7.7-20.9-18.6-23.4z" />
-                </svg>
-                <span>Call</span>
-            </button>
+                  <!-- Hidden test call quality indicators -->
+                  <div id="c2c_test_call_quality_div"></div>
+                </div>
 
-            <!-- If configured 'user_control' before call show video checkbox -->
-            <span id="c2c_video_chk_span">
-                <input id="c2c_video_chk" type="checkbox" title="video call">
-                video
-            </span>
-
-            <!-- If configured 'user_control' - during call show camera button  -->
-            <button id="c2c_camera_btn">
-                <svg id="c2c_camera_svg" viewBox="0 0 30 30">
-                    <g stroke-width="2" stroke-linejoin="round">
-                        <rect x="4" y="12" width="15" height="14" />
-                    <polyline points="20,15 26,12 26,26 20,23" />
-                    <line id="c2c_camera_line_svg" class="c2c_camera_on c2c_camera_off" stroke-width="3" x1="23.823129"
-                        y1="6.0983146" x2="0.69568307" y2="29.082097" stroke="none" />
-                    </g>
-                </svg>
-            </button>
-
-            <span id="c2c_self_video_chk_span">
-                <input id="c2c_self_video_chk" type="checkbox" title="show local video">
-                self video
-            </span>
-
-            <!-- Optional select devices div  -->
-            <div id="c2c_select_devices_div">
-                <form id="c2c_devices" onsubmit="event.preventDefault()">
+                <!-- Optional select devices div (now hidden since we show inputs directly) -->
+                <div id="c2c_select_devices_div" style="display: none">
+                  <form id="c2c_devices" onsubmit="event.preventDefault()">
                     <fieldset>
-                        <legend>Select devices</legend>
-                        <dev id="microphone_dev">
-                        Microphone<br>
-                        <select name="microphone">
-                        </select>
-                        <br>
-                        <br>
-                        </dev>
-                        <dev id="speaker_dev">
-                        Speaker<br>
-                        <select name="speaker">
-                        </select>
-                        <br>
-                        <br>
-                        </dev>
-                        <dev id="camera_dev">
-                        Camera<br>
-                        <select name="camera">
-                        </select>
-                        <br>
-                        <br>
-                        </dev>  
+                      <legend>Select devices</legend>
+                      <div class="select-device-inputs">
+                        <div id="microphone_dev_old">
+                          <label>Microphone</label><br />
+                          <select name="microphone_old"></select>
+                        </div>
+                        <div id="speaker_dev_old">
+                          <label>Speaker</label><br />
+                          <select name="speaker_old"></select>
+                        </div>
+                        <div id="camera_dev_old">
+                          <label>Camera</label><br />
+                          <select name="camera_old"></select>
+                        </div>
+                      </div>
+                      <mc-button
+                        id="select_devices_done_btn"
+                        appearance="primary"
+                        >Done</mc-button
+                      >
                     </fieldset>
-                    <input id="select_devices_done_btn" type="button" value="Done">
-                </form>
+                  </form>
+                </div>
+
+                <!-- Status line -->
+                <!-- <div id="c2c_status_line"></div> -->
+              </div>
             </div>
 
-            <!-- phone status line -->
-            <div id="c2c_status_line"></div>
+            <div slot="actions" class="call-actions">
+              <mc-button
+                id="start-call-btn"
+                icon="phone"
+                appearance="primary"
+                width="full-width"
+              >
+                Start Support Call
+              </mc-button>
+              <div class="call-actions-bottom">
+                <span class="mds-text--small-normal mds-neutral--weak__text-color"
+                >Business hours: Monday-Friday, 8:00-16:00</span
+                >
+                <span class="mds-text--small-normal mds-neutral--weak__text-color"
+                >Alternatively call us on +385 80 0787 068</span
+                >
+              </div>
+            </div>
 
-        </div>
-		<!-- end of click to call widget -->
-
-        <!-- Optional keypad div. To send DTMF during call -->
-        <div id="c2c_keypad_div">
-            <table id="c2c_keypad_table" cellpadding="5" cellspacing="3">
-                <tr>
-                    <td>1</td>
-                    <td>2</td>
-                    <td>3</td>
-                </tr>
-                <tr>
-                    <td>4</td>
-                    <td>5</td>
-                    <td>6</td>
-                </tr>
-                <tr>
-                    <td>7</td>
-                    <td>8</td>
-                    <td>9</td>
-                </tr>
-                <tr>
-                    <td>*</td>
-                    <td>0</td>
-                    <td>#</td>
-                </tr>
-            </table>
-        </div>
+            <div id="c2c_video_div">
+              <video
+                id="c2c_local_video"
+                style="display: none"
+                autoplay
+                playsinline
+              ></video>
+              <video
+                id="c2c_remote_video"
+                style="display: none"
+                autoplay
+                playsinline
+              ></video>
+            </div>
+            </mc-card>
+          </div>
+        </div> <!-- End main-application -->
+      </main>
     </div>
-
-    <!-- Video controls for WebRTC. Can be before or after widget buttons. Invisible for audio call -->
-    <div id="c2c_video_div">
-        <video id="c2c_local_video" style="display: none;" autoplay playsinline></video>
-        <video id="c2c_remote_video" style="display: none;" autoplay playsinline></video>
-    </div>
-
-</body>
-
+  </body>
 </html>
