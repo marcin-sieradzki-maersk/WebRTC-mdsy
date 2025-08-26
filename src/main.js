@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Ensure proper icons in buttons
   ensureProperIcons();
   
-  // Setup checkbox event handling
+  // Setup checkbox event handling.
   setupCheckboxes();
   
   // Handle audio settings button click
